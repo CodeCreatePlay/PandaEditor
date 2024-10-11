@@ -1,78 +1,54 @@
-# CMake minimum version and project declaration
 cmake_minimum_required(VERSION 3.14)
 project(PandaEditor LANGUAGES CXX)
 
-# Check if CMake is using the Visual Studio generator
-if(NOT "${CMAKE_GENERATOR}" MATCHES "Visual Studio")
-    message(FATAL_ERROR "Visual Studio not found. CMake requires Visual Studio for this project.")
+# Ensure Visual Studio compiler is used on Windows
+if(WIN32)
+    if(NOT MSVC)
+        message(FATAL_ERROR "This project requires Microsoft Visual Studio compiler on Windows.")
+    endif()
+else()
+    # On non-Windows platforms, allow CMake to auto-detect compilers
+    message(STATUS "Auto-detecting compiler for non-Windows platform.")
 endif()
 
-# Include the FetchContent module to use FetchContent_Declare and FetchContent_MakeAvailable
-include(FetchContent)
 
-# Define the path to the thirdparty directory
-set(THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/src/thirdparty)
-
-# Ensure the thirdparty folder exists before we proceed with anything else
-# file(MAKE_DIRECTORY ${THIRDPARTY_DIR})
-
-# Define the path to the source directory (the folder containing .cpp files)
+# Paths
+set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
+set(THIRDPARTY_DIR_GAME ${CMAKE_SOURCE_DIR}/game/thirdparty)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
-#
-#
-# ______________________________ PandaEditor setup ______________________________
-# Automatically add all .cpp files from the source directory and subdirectories
+set(GAME_DIR ${CMAKE_SOURCE_DIR}/game)
+
+# Gather source files
 file(GLOB_RECURSE DEV_SOURCES ${SOURCE_DIR}/*.cpp)
-
-# Remove any files in the thirdparty directory from the source list
-list(FILTER DEV_SOURCES EXCLUDE REGEX "${THIRDPARTY_DIR}/.*")
-
-# Manually add main.cpp
+list(FILTER DEV_SOURCES EXCLUDE REGEX "${THIRDPARTY_DIR_SRC}/.*")
+file(GLOB_RECURSE GAME_SOURCES ${GAME_DIR}/*.cpp)
+list(FILTER GAME_SOURCES EXCLUDE REGEX "${THIRDPARTY_DIR_GAME}/.*")
 set(SOURCES ${CMAKE_SOURCE_DIR}/main.cpp)
+list(APPEND SOURCES ${DEV_SOURCES} ${GAME_SOURCES})
 
-# Combine main.cpp with the files from the src folder
-list(APPEND SOURCES ${DEV_SOURCES})
-
-# Print out the sources for debugging (optional)
-# message(STATUS "Source files: ${SOURCES}")
-
-# Add the executable, passing the collected .cpp files
+# Add executable
 add_executable(game ${SOURCES})
+target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_SOURCE_DIR}/game/include)
 
-target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/src/include)
-#
-#
-# ______________________________ Panda3D setup ______________________________
-# Load the config file if it exists
+# Panda3D setup
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.cmake")
     include("${CMAKE_SOURCE_DIR}/config.cmake")
 else()
     message(FATAL_ERROR "Config file not found: ${CMAKE_SOURCE_DIR}/config.cmake. Please create it.")
 endif()
 
-# Set the paths to Panda3D include and lib directories based on the config file
-set(PANDA3D_INCLUDE_DIR "${PANDA3D_ROOT}/include")
-set(PANDA3D_LIBRARY_DIR "${PANDA3D_ROOT}/lib")
+find_library(PANDA_FRAMEWORK libp3framework PATHS ${PANDA3D_LIBRARY_DIR})
+find_library(PANDA_LIB libpanda PATHS ${PANDA3D_LIBRARY_DIR})
+find_library(PANDAEXPRESS_LIB libpandaexpress PATHS ${PANDA3D_LIBRARY_DIR})
+find_library(DTOOL_LIB libp3dtool PATHS ${PANDA3D_LIBRARY_DIR})
+find_library(DTOOLCONFIG_LIB libp3dtoolconfig PATHS ${PANDA3D_LIBRARY_DIR})
 
-# Include the Panda3D headers
 target_include_directories(game PRIVATE ${PANDA3D_INCLUDE_DIR})
+target_link_libraries(game PRIVATE ${PANDA_FRAMEWORK} ${PANDA_LIB} ${PANDAEXPRESS_LIB} ${DTOOL_LIB} ${DTOOLCONFIG_LIB})
 
-# Link the Panda3D libraries
-target_link_directories(game PRIVATE ${PANDA3D_LIBRARY_DIR})
-
-# Specify the Panda3D libraries to link with
-target_link_libraries(game
-    libp3framework.lib
-    libpanda.lib
-    libpandaexpress.lib
-    libp3dtool.lib
-    libp3dtoolconfig.lib
-)
-#
-#
-# ______________________________ imgui setup ______________________________
+# ImGUI setup
 # Define the path to the ImGui directory (since it's downloaded via batch script)
-set(IMGUI_DIR ${THIRDPARTY_DIR}/imgui)
+set(IMGUI_DIR ${THIRDPARTY_DIR_SRC}/imgui)
 
 # Include the ImGui headers and link the ImGui sources
 if(EXISTS ${IMGUI_DIR})
@@ -91,13 +67,24 @@ else()
     message(FATAL_ERROR "ImGui not found. Ensure it is downloaded to the correct location.")
 endif()
 
-# Set C++ Standard (optional, if needed)
-set_target_properties(game PROPERTIES CXX_STANDARD 98)
+# C++ standard
+# set_target_properties(game PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
-# Add a custom command to run the executable after the build is complete
-add_custom_command(TARGET game
-    POST_BUILD
-    COMMAND $<TARGET_FILE:game>  # Runs the game executable after build
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}  # Optional: Set working directory
-    COMMENT "Running game.exe after build..."
-)
+# Post-build command to automatically run the game after the build
+if(WIN32)
+    # For Windows (Visual Studio or any other tool)
+    add_custom_command(TARGET game
+        POST_BUILD
+        COMMAND $<IF:$<CONFIG:Release>,$<TARGET_FILE:game>,>
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}  # Set working directory
+        COMMENT "Running game.exe in Release mode on Windows..."
+    )
+elseif(UNIX)
+    # For Linux and macOS
+    add_custom_command(TARGET game
+        POST_BUILD
+        COMMAND $<TARGET_FILE:game>
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}  # Set working directory
+        COMMENT "Running game after build on Unix-like platforms..."
+    )
+endif()

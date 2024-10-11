@@ -1,5 +1,18 @@
 #!/bin/bash
-set -e  # Exit immediately if a command exits with a non-zero status
+
+# Set to exit immediately if any command fails
+set -e
+
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
+# Ensure project directory exists
+PROJECT_DIR="$(pwd)/game"
+
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "Project directory not found, creating it now..."
+    mkdir -p "$PROJECT_DIR"
+fi
 
 # Set up variables for third-party dependencies and ImGui version
 THIRDPARTY_DIR="$(pwd)/src/thirdparty"
@@ -17,12 +30,6 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "Downloading ImGui from GitHub as ZIP..."
     curl -L "https://github.com/ocornut/imgui/archive/refs/tags/$IMGUI_VERSION.zip" -o imgui.zip
 
-    # Check if the download was successful
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to download ImGui ZIP."
-        exit 1
-    fi
-
     # Extract the ZIP file into the third-party directory
     echo "Extracting ImGui..."
     unzip imgui.zip -d "$THIRDPARTY_DIR"
@@ -36,25 +43,27 @@ else
     echo "ImGui already downloaded."
 fi
 
-# Run CMake to configure the project
-echo "Configuring the project with CMake..."
-cmake -Bbuild -S. -A x64
+# CMake configuration function (log stdout and stderr)
+function run_cmake_config {
+    echo "Configuring the project with CMake..."
+    # cmake -Bbuild -S. -A x64 
+	cmake -Bbuild -S. -A x64 \
+		> >(tee logs/cmake_config_output.log) \
+		2>&1 | tee -a logs/cmake_config_output.log
+}
 
-# Check if CMake configuration succeeded
-if [ $? -ne 0 ]; then
-    echo "ERROR: CMake configuration failed."
-    exit 1
-fi
+# CMake build function (log stdout and stderr)
+function run_cmake_build {
+    echo "Building the project..."
+    # cmake --build build --config Release
+	cmake --build build --config Release \
+		> >(tee logs/cmake_build_output.log) \
+		2>&1 | tee -a logs/cmake_build_output.log
+}
 
-# Build the project
-echo "Building the project..."
-cmake --build build --config Release
-
-# Check if the build succeeded
-if [ $? -ne 0 ]; then
-    echo "ERROR: Build failed."
-    exit 1
-fi
+# Run CMake configuration and build
+run_cmake_config
+run_cmake_build
 
 # Pause the script (for environments that require a key press to continue)
 read -n 1 -s -r -p "Press any key to continue..."
