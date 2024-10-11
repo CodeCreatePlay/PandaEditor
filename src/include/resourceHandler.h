@@ -22,7 +22,8 @@ public:
         const LoaderOptions& loader_options = LoaderOptions(),
         bool  use_cached = false,
         bool  instanced = false,
-        bool  create_np = true);
+        bool  create_np = true,
+		bool is_editor_resource=false);
 
     PT(Texture) load_texture(
         const std::string& path,

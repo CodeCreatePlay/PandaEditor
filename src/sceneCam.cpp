@@ -128,8 +128,7 @@ void SceneCam::update() {
 
 void SceneCam::update_axes() {
     // Set rotation to inverse of camera rotation
-    float aspect = static_cast<float>(win->get_x_size() / win->get_y_size());
-
+    float aspect = static_cast<float>(win->get_sbs_left_x_size()) / static_cast<float>(win->get_sbs_left_y_size());
     axes->set_pos(aspect - 0.25f, 0.0f, 1.0f - 0.25f);
 
     LQuaternion camera_quat(get_quat());

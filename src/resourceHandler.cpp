@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
+#include <sys/stat.h>
 #include "include/resourceHandler.h"
+#include "utils/include/pathUtils.h"
+
 
 ResourceHandler::ResourceHandler() {
     _loader = Loader::get_global_ptr();
@@ -11,12 +14,18 @@ NodePath ResourceHandler::load_model(
     const LoaderOptions& loader_options,
     bool use_cached,
     bool instanced,
-    bool create_np) {
+    bool create_np,
+	bool is_editor_resource) {
+		
     NodePath result;
+	std::string path_on_disk;
+	
+	if(!is_editor_resource)
+		path_on_disk = PathUtils::join_paths(PathUtils::get_current_working_dir(), std::string("game/").append(path.c_str()));
+	else
+		path_on_disk = PathUtils::join_paths(PathUtils::get_current_working_dir(), path.c_str());
 
-    std::ifstream file(path);
-    if (file.is_open()) {
-        file.close();
+    if (PathUtils::is_file(path_on_disk.c_str())) {
         std::string ext = path.substr(path.find_last_of(".") + 1);
         if (ext == "gltf" || ext == "glb") {
             // load gltf or glb here
@@ -40,7 +49,7 @@ NodePath ResourceHandler::load_model(
         }
     }
     else {
-        std::cerr << "Not a file " << path << std::endl;
+        std::cerr << "Not a file " << path_on_disk << std::endl;
     }
 
     return result;

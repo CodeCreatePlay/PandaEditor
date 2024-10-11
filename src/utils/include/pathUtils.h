@@ -18,6 +18,7 @@
 class PathUtils {
 public:
     static inline std::string get_current_working_dir();
+	static inline std::string join_paths(const std::string& base, const std::string& folder);
     static inline bool file_exists(const std::string& path);
     static inline bool is_dir(const char* path);
     static inline bool is_file(const char* path);
@@ -58,6 +59,20 @@ inline std::string PathUtils::get_current_working_dir()
     }
     else {
         return std::string();
+    }
+}
+
+inline std::string PathUtils::join_paths(const std::string& base, const std::string& folder) {
+    // Check if the base path ends with a separator, and add one if necessary
+    char separator = '/';  // Use '/' for POSIX systems, or '\\' for Windows
+#ifdef _WIN32
+    separator = '\\';
+#endif
+
+    if (!base.empty() && base.back() != separator) {
+        return base + separator + folder;
+    } else {
+        return base + folder;
     }
 }
 

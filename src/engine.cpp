@@ -31,13 +31,14 @@ Engine::~Engine() {
     exit();
 }
 
-void Engine::add_update_callback(std::function<void()> callback) {
-    /*
+void Engine::add_update_callback(void(*callback)()) {
+    // Check if the function pointer already exists in the vector
     if (std::find(update_callbacks.begin(), update_callbacks.end(), callback) == update_callbacks.end()) {
+        // Add the function pointer if it's not already in the vector
         update_callbacks.push_back(callback);
     }
-    */
 }
+
 
 void Engine::create_win() {
     engine = GraphicsEngine::get_global_ptr();
@@ -96,8 +97,7 @@ void Engine::create_2d_render() {
     DCAST(PGTop, pixel2d.node())->set_mouse_watcher(mouse_watcher_node);
 
     LVecBase2i size = get_size();
-    if (size.get_x() > 0 && size.get_y() > 0)
-	{
+    if (size.get_x() > 0 && size.get_y() > 0) {
 		pixel2d.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
 	}
 
@@ -226,9 +226,8 @@ void Engine::on_evt_size() {
         scene_cam.on_resize_event(aspect_ratio);
 
     LVecBase2i size = get_size();
-    if (size.get_x() > 0 && size.get_y() > 0)
-	{
-        pixel2d.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
+    if (size.get_x() > 0 && size.get_y() > 0) {
+        pixel2d.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
 	}
 }
 
@@ -268,10 +267,10 @@ float Engine::get_aspect_ratio() {
 LVecBase2i Engine::get_size() {
     if (win != nullptr) {
 
-        if (DCAST(GraphicsWindow, win) && win->has_size())
-        {
+        if (DCAST(GraphicsWindow, win) && win->has_size()) {
             GraphicsWindow* gwin = DCAST(GraphicsWindow, win);
-            gwin->get_size();
+            LVecBase2i size = gwin->get_size();
+			return LVecBase2i(size.get_x(), size.get_y());
         }
     }
 

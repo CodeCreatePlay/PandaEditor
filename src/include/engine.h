@@ -70,7 +70,7 @@ public:
     AxisGrid axisGrid;
 
     // methods
-    void add_update_callback(std::function<void()> callback);
+	void add_update_callback(void(*callback)());
     void update();
 
     float get_aspect_ratio();
@@ -92,7 +92,7 @@ private:
     void on_evt_size();
 
     float aspect_ratio;
-    std::vector<std::function<void()>> update_callbacks;
+    std::vector<void(*)()> update_callbacks;
     std::function<void(const Event*, const std::vector<void*>&)> evt_hook;
 };
 
