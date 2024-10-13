@@ -11,7 +11,6 @@ else()
     message(STATUS "Auto-detecting compiler for non-Windows platform.")
 endif()
 
-
 # Paths
 set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
 set(THIRDPARTY_DIR_GAME ${CMAKE_SOURCE_DIR}/game/thirdparty)
@@ -26,9 +25,21 @@ list(FILTER GAME_SOURCES EXCLUDE REGEX "${THIRDPARTY_DIR_GAME}/.*")
 set(SOURCES ${CMAKE_SOURCE_DIR}/main.cpp)
 list(APPEND SOURCES ${DEV_SOURCES} ${GAME_SOURCES})
 
+
+
 # Add executable
 add_executable(game ${SOURCES})
 target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_SOURCE_DIR}/game/include)
+
+# Custom target to touch main.cpp
+add_custom_target(
+    force_recompile_main ALL
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/main.cpp
+    COMMENT "Touching main.cpp to force recompilation"
+)
+
+# Make the 'game' target depend on this 'force_recompile_main' target
+add_dependencies(game force_recompile_main)
 
 # Panda3D setup
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.cmake")
