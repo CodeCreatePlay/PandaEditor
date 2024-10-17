@@ -39,7 +39,6 @@ void Engine::add_update_callback(void(*callback)()) {
     }
 }
 
-
 void Engine::create_win() {
     engine = GraphicsEngine::get_global_ptr();
     pipe = GraphicsPipeSelection::get_global_ptr()->make_default_pipe();
@@ -169,8 +168,25 @@ void Engine::setup_input_handling() {
     mouse_watchers.push_back(mouse_watcher_np);
 }
 
-void Engine::set_event_hook(std::function<void(const Event*, const std::vector<void*>&)> hook) {
-    evt_hook = hook;
+void Engine::set_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
+	
+	auto result = evt_hooks.emplace(5, hook);
+	
+	if (result.second) {
+		evt_hooks[key] = hook;
+    }
+	else {
+        std::cout << "Unable to set event hook, Key: " << key << " already exists!" << std::endl;
+    }
+}
+
+void Engine::remove_event_hook(int key) {
+	if (evt_hooks.find(key) == evt_hooks.end()) {
+		evt_hooks.erase(key);
+    }
+	else {
+        std::cout << "Unable to remove event hook, Key: " << key << " does not exists!" << std::endl;
+    }
 }
 
 void Engine::process_events(const Event *event) {
@@ -204,10 +220,10 @@ void Engine::process_events(const Event *event) {
                 param_list.push_back(event_parameter.get_ptr());
             }
         }
-
-        if (evt_hook) {
-            evt_hook(event, param_list);
-        }
+		
+		for(const auto& pair : evt_hooks) {
+			pair.second(event, param_list);
+		}
 
         if (event_handler) {
             event_handler->dispatch_event(event);

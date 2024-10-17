@@ -76,7 +76,8 @@ public:
     float get_aspect_ratio();
     LVecBase2i get_size();
 
-    void set_event_hook(std::function<void(const Event*, const std::vector<void*>&)> hook);
+    void set_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
+	void remove_event_hook(int key);
 
     void exit();
 
@@ -93,7 +94,9 @@ private:
 
     float aspect_ratio;
     std::vector<void(*)()> update_callbacks;
-    std::function<void(const Event*, const std::vector<void*>&)> evt_hook;
+    // std::function<void(const Event*, const std::vector<void*>&)> evt_hook;
+	// std::vector<std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
+	std::unordered_map<int, std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
 };
 
 #endif
