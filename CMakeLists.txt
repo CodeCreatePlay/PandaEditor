@@ -29,7 +29,7 @@ list(APPEND SOURCES ${DEV_SOURCES} ${GAME_SOURCES})
 
 # Add executable
 add_executable(game ${SOURCES})
-target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_SOURCE_DIR}/game/include)
+target_include_directories(game PRIVATE ${CMAKE_SOURCE_DIR}/src/include ${CMAKE_SOURCE_DIR}/src/utils/include ${CMAKE_SOURCE_DIR}/game/include)
 
 # Custom target to touch main.cpp
 add_custom_target(
