@@ -76,7 +76,7 @@ public:
     float get_aspect_ratio();
     LVecBase2i get_size();
 
-    void set_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
+    void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
 	void remove_event_hook(int key);
 
     void exit();

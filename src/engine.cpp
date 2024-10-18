@@ -168,9 +168,9 @@ void Engine::setup_input_handling() {
     mouse_watchers.push_back(mouse_watcher_np);
 }
 
-void Engine::set_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
+void Engine::add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
 	
-	auto result = evt_hooks.emplace(5, hook);
+	auto result = evt_hooks.emplace(key, hook);
 	
 	if (result.second) {
 		evt_hooks[key] = hook;
