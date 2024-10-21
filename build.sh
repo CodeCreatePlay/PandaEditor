@@ -1,7 +1,31 @@
 #!/bin/bash
 
-# Set to exit immediately if any command fails
-set -e
+case "$OSTYPE" in
+  # bsd*)     echo "BSD" ;;
+  # solaris*) echo "SOLARIS" ;;
+  darwin*)       echo "macOS (Darwin)" ;; 
+  linux*)        echo "Linux" ;;
+  msys*|cygwin*) echo "Windows" ;;
+  *)             echo "Unsupported OS: $OSTYPE" 
+				 echo "Exiting... Press any key to continue."
+			     read -n 1 -s  # Wait for a key press
+			     exit 1 ;;     # Exit the script with an error code
+esac
+
+set -e # Exit immediately if any command fails
+
+# Checks if a command exists
+function check_dependency {
+    if ! command -v "$1" &> /dev/null; then
+        echo "Error: Required dependency '$1' is not installed. Please install it before proceeding."
+        exit 1
+    fi
+}
+
+# Check required dependencies
+check_dependency "cmake"
+check_dependency "curl"
+check_dependency "unzip"
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -46,19 +70,17 @@ fi
 # CMake configuration function (log stdout and stderr)
 function run_cmake_config {
     echo "Configuring the project with CMake..."
-    # cmake -Bbuild -S. -A x64 
-	cmake -Bbuild -S. -A x64 \
-		> >(tee logs/cmake_config_output.log) \
-		2>&1 | tee -a logs/cmake_config_output.log
+    cmake -Bbuild -S. -A x64 \
+        > >(tee logs/cmake_config_output.log) \
+        2>&1 | tee -a logs/cmake_config_output.log
 }
 
 # CMake build function (log stdout and stderr)
 function run_cmake_build {
     echo "Building the project..."
-    # cmake --build build --config Release
-	cmake --build build --config Release \
-		> >(tee logs/cmake_build_output.log) \
-		2>&1 | tee -a logs/cmake_build_output.log
+    cmake --build build --config Release \
+        > >(tee logs/cmake_build_output.log) \
+        2>&1 | tee -a logs/cmake_build_output.log
 }
 
 # Run CMake configuration and build

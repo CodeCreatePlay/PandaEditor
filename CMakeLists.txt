@@ -1,15 +1,27 @@
 cmake_minimum_required(VERSION 3.14)
 project(PandaEditor LANGUAGES CXX)
 
-# Ensure Visual Studio compiler is used on Windows
 if(WIN32)
-    if(NOT MSVC)
-        message(FATAL_ERROR "This project requires Microsoft Visual Studio compiler on Windows.")
+    # Ensure that Microsoft Visual Studio (MSVC) is used
+    if(MSVC)
+        message(STATUS "Using Microsoft Visual Studio compiler on Windows.")
+    else()
+        message(FATAL_ERROR "This project requires Microsoft Visual Studio compiler on Windows. Please install Visual Studio with C++ build tools.")
     endif()
 else()
-    # On non-Windows platforms, allow CMake to auto-detect compilers
-    message(STATUS "Auto-detecting compiler for non-Windows platform.")
+    # On non-Windows platforms, allow CMake to auto-detect the compiler
+    message(STATUS "Auto-detecting compiler (GCC or Clang).")
+
+    # Check if the auto-detected compiler is GCC or Clang
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        message(STATUS "GCC compiler detected.")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(STATUS "Clang compiler detected.")
+    else()
+        message(WARNING "Unsupported compiler detected. Panda3D require GCC or Clang.")
+    endif()
 endif()
+
 
 # Paths
 set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
