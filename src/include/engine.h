@@ -30,7 +30,7 @@
 // other
 #include "sceneCam.h"
 #include "axisGrid.h"
-#include "resourceHandler.h"
+#include "resourceManager.h"
 #include "renderer.h"
 #include "..//utils/include/mouse.h"
 
@@ -65,7 +65,7 @@ public:
     NodePath cam2d;
 
     Mouse mouse;
-    ResourceHandler resourceHandler;
+    ResourceManager resourceManager;
     Renderer renderer;
     AxisGrid axisGrid;
 
