@@ -5,13 +5,15 @@
 
 Demon::Demon() {
 	setup_paths();
+
+	engine.add_event_hook(0, [this](const Event* evt, const std::vector<void*>& params) {
+		this->on_evt(evt, params);
+	});
 }
 
 Demon::~Demon() {}
 
-void Demon::on_evt(const Event* evt, const std::vector<void*>&) {
-	if (evt->get_name() == "window-event") { }
-}
+void Demon::on_evt(const Event* evt, const std::vector<void*>&) {}
 
 void Demon::update() {
     engine.update();
@@ -20,7 +22,6 @@ void Demon::update() {
 void Demon::setup_paths() {
 	std::string path = PathUtils::get_current_working_dir();
 	get_model_path().prepend_directory(Filename::from_os_specific(path));
-    get_model_path().prepend_directory(Filename::from_os_specific(PathUtils::join_paths(path, "game")));
 }
 
 /*
