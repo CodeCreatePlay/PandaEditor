@@ -38,33 +38,45 @@ NodePath ResourceManager::load_model(
 	*/
 }
 
-PT(Texture) ResourceManager::load_texture(const std::string& path) {
+PT(Texture) ResourceManager::load_texture(const std::string& path, bool isCubeMap) {
 
 	LoaderOptions options = LoaderOptions();
-	return ResourceManager::load_texture(path, options, false);
+	return ResourceManager::load_texture(path, options, false, isCubeMap);
 }
 
 PT(Texture) ResourceManager::load_texture(
 	const std::string& path,
-	bool readMipmaps) {
+	bool readMipmaps,
+	bool isCubeMap) {
 
 	LoaderOptions options = LoaderOptions();
-	return ResourceManager::load_texture(path, options, readMipmaps);
+	return ResourceManager::load_texture(path, options, readMipmaps, isCubeMap);
 }
 
 PT(Texture) ResourceManager::load_texture(
 	const std::string& path,
-	const LoaderOptions& options) {
+	const LoaderOptions& options,
+	bool isCubeMap) {
 		
-	return ResourceManager::load_texture(path, options, false);
+	return ResourceManager::load_texture(path, options, false, isCubeMap);
 }
 	
 PT(Texture) ResourceManager::load_texture(
 	const std::string& path,
 	const LoaderOptions& options,
-	bool readMipmaps) {
+	bool readMipmaps,
+	bool isCubeMap) {
 		
-	return TexturePool::load_texture(Filename(path), 0, readMipmaps, options);
+	if(isCubeMap) {
+
+		// Load a cube map texture
+		std::string texture_pattern = ""; // This should be set appropriately
+		return TexturePool::load_cube_map(Filename(texture_pattern), readMipmaps, options);
+	}
+	else {
+		
+		return TexturePool::load_texture(Filename(path), 0, readMipmaps, options);
+	}
 }
 
 /*

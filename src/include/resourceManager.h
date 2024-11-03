@@ -32,20 +32,23 @@ public:
         const std::string& path,
         const LoaderOptions& loader_options);
 	
-	PT(Texture) load_texture(const std::string& path);
+	PT(Texture) load_texture(const std::string& path, bool isCubeMap = false);
 	
 	PT(Texture) load_texture(
 		const std::string& path,
-		bool readMipmaps);
+		bool readMipmaps,
+		bool isCubeMap = false);
 	
 	PT(Texture) load_texture(
 		const std::string& path,
-		const LoaderOptions& loader_options);
+		const LoaderOptions& loader_options,
+		bool isCubeMap = false);
 		
 	PT(Texture) load_texture(
 		const std::string& path,
 		const LoaderOptions& loader_options,
-		bool readMipmaps);
+		bool readMipmaps,
+		bool isCubeMap);
 
     void load_font(const std::string& font);
     void load_sound(const std::string& sound);
