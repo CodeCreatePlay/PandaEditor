@@ -17,6 +17,8 @@
 #include "animUtils.h"
 
 
+static const std::string ASSETS_PATH = "demos/assets/models";
+
 class RoamingRalphDemo {
 public:
 	RoamingRalphDemo(Demon *demon) : demon(demon) {
@@ -142,7 +144,7 @@ private:
 	
 	void load_world() {
 		// environment = demon->engine.resourceManager.load_model("roaming-ralph/models/world.egg.pz");
-		environment = demon->engine.resourceManager.load_model("demos/roaming-ralph/assets/models/Level.egg");
+		environment = demon->engine.resourceManager.load_model(ASSETS_PATH + "/Level.egg");
 		environment.reparent_to(demon->engine.render);
 		environment.set_pos(LPoint3(0.0f, 0.0f, 0.0f));
 		environment.ls();
@@ -154,12 +156,12 @@ private:
 	
 	void load_actor() {
 		// load character model
-		ralph = demon->engine.resourceManager.load_model("demos/roaming-ralph/assets/models/ralph.egg.pz");
+		ralph = demon->engine.resourceManager.load_model(ASSETS_PATH + "/ralph.egg.pz");
 		ralph.reparent_to(demon->engine.render);
 		start_pos = environment.find("**/start_point").get_pos();
 		ralph.set_pos(start_pos + LPoint3(0.0f, 0.0f, 3.0f));
 		
-		NodePath walk_anim = demon->engine.resourceManager.load_model("demos/roaming-ralph/assets/models/ralph-run.egg.pz");
+		NodePath walk_anim = demon->engine.resourceManager.load_model(ASSETS_PATH + "/ralph-run.egg.pz");
 		AnimUtils::bind_anims(ralph, walk_anim, animator);  // Bind the animation to the character
 	}
 	
