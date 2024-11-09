@@ -61,12 +61,15 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "Extracting ImGui..."
     check_command_success_status unzip imgui.zip -d "$THIRDPARTY_DIR"
 
-    # Rename the extracted folder to imgui
-    check_command_success_status mv "$THIRDPARTY_DIR/imgui-$IMGUI_VERSION" "$THIRDPARTY_DIR/imgui"
-    check_command_success_status rm imgui.zip
-else
-    echo "ImGui already downloaded."
+    # echo "Renaming ImGui directory..."
+    check_command_success_status mv "$THIRDPARTY_DIR/imgui-${IMGUI_VERSION#v}" "$THIRDPARTY_DIR/imgui"
+
+    echo "Removing ImGui zip file..."
+    rm imgui.zip || { echo "Error: Failed to remove imgui.zip"; exit 1; }
+
+    echo "ImGui setup completed."
 fi
+
 
 # Ensure project directory exists
 PROJECT_DIR="$(pwd)/game"
@@ -97,6 +100,22 @@ if [ $# -gt 0 ]; then
     fi
 fi
 
+# Global variable for build directory
+BUILD_DIR=""
+	
+# Function to set the build directory based on project name
+function set_build_directory {    
+	
+	if [ -n "$1" ]; then
+		BUILD_DIR="$(pwd)/builds/$1"
+	else
+		BUILD_DIR="$(pwd)/builds/default-project"
+	fi
+	
+    # Ensure the build directory exists
+    mkdir -p "$BUILD_DIR"
+}
+
 # Function to log CMake output
 function log_cmake_output {
     local log_file="$1"
@@ -109,43 +128,54 @@ function log_cmake_output {
     check_command_success_status
 }
 
-# Configure project with CMake
+# Configure project with CMake in the determined build directory
 function run_cmake_config {
     local cmake_arch_option=""
-    local demo_option="-DDEMO_PROJECT=-1"
+    local project="-DUSER_PROJECT=-1"
+    
     if [ -n "$1" ]; then
-        demo_option="-DDEMO_PROJECT=$1"
-        echo "Configuring demo project: $1"
+        project="-DUSER_PROJECT=$1"
     fi
+
+    # Determine architecture options for Windows
     if [ "$OS_TYPE" = "Windows" ]; then
         cmake_arch_option="-A x64"
     fi
-    : > logs/cmake_config_output.log
-    echo "Configuring the project with CMake..."
-    log_cmake_output logs/cmake_config_output.log cmake -Bbuild -S. $cmake_arch_option $demo_option
+
+    # Clear previous log and configure the project
+    : > "$BUILD_DIR"/cmake_config_output.log
+    echo "Configuring the project with CMake in $BUILD_DIR..."
+    log_cmake_output "$BUILD_DIR"/cmake_config_output.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
 }
 
 # Build project with CMake
 function run_cmake_build {
-    : > logs/cmake_build_output.log
-    echo "Building the project..."
-    log_cmake_output logs/cmake_build_output.log cmake --build build --config Release
+    : > "$BUILD_DIR"/cmake_build_output.log
+    echo "Building the project in $BUILD_DIR..."
+    log_cmake_output "$BUILD_DIR"/cmake_build_output.log cmake --build "$BUILD_DIR" --config Release
 }
+
+# Set the build directory only once
+set_build_directory "$1"
 
 # Run CMake configuration and build
 run_cmake_config "$1"
 run_cmake_build
 
 # Start the executable
+# Set executable name based on OS
 EXECUTABLE_NAME="game"
-[ "$OS_TYPE" = "Windows" ] && EXECUTABLE_NAME="game.exe"
-if [ -f "build/Release/$EXECUTABLE_NAME" ]; then
-    echo "Starting the game executable..."
-    ./build/Release/$EXECUTABLE_NAME
-else
-    echo "Error: Executable '$EXECUTABLE_NAME' not found."
-    exit 1
+if [ "$OS_TYPE" = "Windows" ]; then
+    EXECUTABLE_NAME="game.exe"
 fi
 
-# Pause script (optional)
-read -n 1 -s -r -p "Press any key to continue..."
+# Check if the executable exists in the expected directory
+if [ -f "$BUILD_DIR/Release/$EXECUTABLE_NAME" ]; then
+    echo "Starting the game executable..."
+    "$BUILD_DIR/Release/$EXECUTABLE_NAME"
+	read -n 1 -s -r -p "Press any key to continue..."
+else
+    echo "Error: Executable '$EXECUTABLE_NAME' not found in $BUILD_DIR."
+    read -n 1 -s -r -p "Press any key to continue..."
+    # exit 1
+fi
