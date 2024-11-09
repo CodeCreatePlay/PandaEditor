@@ -143,16 +143,16 @@ function run_cmake_config {
     fi
 
     # Clear previous log and configure the project
-    : > "$BUILD_DIR"/cmake_config_output.log
-    echo "Configuring the project with CMake in $BUILD_DIR..."
-    log_cmake_output "$BUILD_DIR"/cmake_config_output.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
+    : > "$BUILD_DIR"/build-log.log
+    echo -e "Starting Configuration with CMake..." >> "$BUILD_DIR"/build-log.log
+    log_cmake_output "$BUILD_DIR"/build-log.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
 }
 
 # Build project with CMake
 function run_cmake_build {
-    : > "$BUILD_DIR"/cmake_build_output.log
-    echo "Building the project in $BUILD_DIR..."
-    log_cmake_output "$BUILD_DIR"/cmake_build_output.log cmake --build "$BUILD_DIR" --config Release
+    # : > "$BUILD_DIR"/cmake_build_output.log
+    echo -e "\n\nStarting Build..." >> "$BUILD_DIR"/build-log.log
+    log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
 # Set the build directory only once
