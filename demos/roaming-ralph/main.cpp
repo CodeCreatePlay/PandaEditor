@@ -23,7 +23,7 @@ class RoamingRalphDemo {
 public:
 	RoamingRalphDemo(Demon *demon) : demon(demon) {
 		global_clock = ClockObject::get_global_clock();
-		
+
 		load_world ();
 		load_actor ();
 		setup_character_collisions();
@@ -85,6 +85,9 @@ private:
 	
 
 	void update_task(GenericAsyncTask*) {
+		
+		if(!demon->engine.mouse_watcher->has_mouse())
+			return;
 		
 		if (key_map["left"])
             ralph.set_h(ralph.get_h() + 300 * global_clock->get_dt());
@@ -222,13 +225,11 @@ private:
 };
 
 
-int main(int argc, char* argv[]) {	
-    Demon demon;
+int main(int argc, char* argv[]) {
 	
+    Demon demon;
 	RoamingRalphDemo ralph(&demon);
 	
-    while (!demon.engine.win->is_closed())
-        demon.update();
-	
+	demon.start();
     return 0;
 }

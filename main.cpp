@@ -4,9 +4,6 @@
 int main(int argc, char* argv[]) {
 
     Demon demon;
-		
-    while (!demon.engine.win->is_closed())
-        demon.update();
-	
+	demon.start();
     return 0;
 }

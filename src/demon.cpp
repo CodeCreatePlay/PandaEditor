@@ -13,16 +13,30 @@ Demon::Demon() {
 
 Demon::~Demon() {}
 
-void Demon::on_evt(const Event* evt, const std::vector<void*>&) {}
-
-void Demon::update() {
-    engine.update();
-}
-
 void Demon::setup_paths() {
 	std::string path = PathUtils::get_current_working_dir();
 	get_model_path().prepend_directory(Filename::from_os_specific(path));
 }
+
+void Demon::on_evt(const Event* evt, const std::vector<void*>&) {}
+
+void Demon::start() {
+	
+	auto task_mgr = AsyncTaskManager::get_global_ptr();
+	PT(GenericAsyncTask) my_task = new GenericAsyncTask("MainUpdateLoop",
+		[](GenericAsyncTask* task, void* user_data) {
+			static_cast<Engine*>(user_data)->update(task);
+			return AsyncTask::DS_cont;  // Task continues running
+		},
+		this
+	);
+	task_mgr->add(my_task);
+	
+	while (!engine.win->is_closed()) {
+		AsyncTaskManager::get_global_ptr()->poll();
+	}
+}
+
 
 /*
 imgui integration

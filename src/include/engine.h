@@ -27,6 +27,7 @@
 #include <dataNodeTransmit.h>
 // Asynchronous Task Management
 #include <asyncTaskManager.h>
+#include <genericAsyncTask.h>
 // other
 #include "sceneCam.h"
 #include "axisGrid.h"
@@ -71,7 +72,7 @@ public:
 
     // methods
 	void add_update_callback(void(*callback)());
-    void update();
+    void update(GenericAsyncTask*);
 
     float get_aspect_ratio();
     LVecBase2i get_size();
@@ -94,8 +95,6 @@ private:
 
     float aspect_ratio;
     std::vector<void(*)()> update_callbacks;
-    // std::function<void(const Event*, const std::vector<void*>&)> evt_hook;
-	// std::vector<std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
 	std::unordered_map<int, std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
 };
 

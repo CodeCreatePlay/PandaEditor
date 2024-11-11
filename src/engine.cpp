@@ -247,12 +247,7 @@ void Engine::on_evt_size() {
 	}
 }
 
-void Engine::update() {
-    // keep taskmanager updated
-    if (mouse_watcher->has_mouse()) {
-        AsyncTaskManager::get_global_ptr()->poll();
-    }
-    
+void Engine::update(GenericAsyncTask*) {    
     // traverse the data graph.This reads all the control
     // inputs(from the mouse and keyboard, for instance) and also
     // directly acts upon them(for instance, to move the avatar).
