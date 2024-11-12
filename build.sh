@@ -53,6 +53,13 @@ if [ ! -d "$THIRDPARTY_DIR" ]; then
     check_command_success_status mkdir -p "$THIRDPARTY_DIR"
 fi
 
+# Ensure project directory exists
+PROJECT_DIR="$(pwd)/game"
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "Creating project directory..."
+    check_command_success_status mkdir -p "$PROJECT_DIR"
+fi
+
 # Download ImGui if not already downloaded
 if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "Downloading ImGui from GitHub as ZIP..."
@@ -70,39 +77,38 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "ImGui setup completed."
 fi
 
+PROJECT_DIRECTORY="-1" # Global variable for project directory
+BUILD_DIR="" # Global variable for build directory
 
-# Ensure project directory exists
-PROJECT_DIR="$(pwd)/game"
-if [ ! -d "$PROJECT_DIR" ]; then
-    echo "Creating project directory..."
-    check_command_success_status mkdir -p "$PROJECT_DIR"
-fi
+function set_project_directory {    
 
-# Check for demo project argument and handle assets
-ASSETS_DIR="$(pwd)/demos/assets"
-if [ $# -gt 0 ]; then
-    echo "Starting demo project: $1"
-    if [ ! -d "$ASSETS_DIR" ]; then
-        echo "Demo assets folder not found."
-        read -p "Download the 'assets' folder? (y/n): " response
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-            echo "Downloading 'assets'..."
-            check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
-            check_command_success_status mkdir -p "$ASSETS_DIR"
-            check_command_success_status unzip assets.zip -d "$ASSETS_DIR"
-            check_command_success_status rm assets.zip
-            echo "'assets' downloaded and extracted successfully."
-        else
-            echo "Assets download canceled."
-            read -n 1 -s -r -p "Press any key to exit."
-            exit 1
-        fi
-    fi
-fi
-
-# Global variable for build directory
-BUILD_DIR=""
+	if [ -n "$1" ] && [ ! -d "$(pwd)/demos/$1" ] && [ ! -d "$(pwd)/game/$1" ]; then
+		echo "Specified project $1 not found!"
+		read -n 1 -s -r -p "Press any key to continue..."
+		exit 1
+	fi
 	
+	if [ -n "$1" ] && [ -d "$(pwd)/demos/$1" ]; then
+		PROJECT_DIRECTORY="$(pwd)/demos/$1"
+		configure_demo_project "$1"
+	elif [ -n "$1" ] && [-d "$(pwd)/game/$1"]; then
+		PROJECT_DIRECTORY="$(pwd)/game/$1"
+	else
+		PROJECT_DIRECTORY="$(pwd)/game/default-project"
+		echo "running default project!"
+		if [ ! -d "$PROJECT_DIRECTORY" ]; then
+			echo "-- No project found, creating a default project..."
+			mkdir -p "$PROJECT_DIRECTORY" # create project directory
+			touch "$PROJECT_DIRECTORY"/main.cpp # create a new main file for some boilerplate code
+			
+			echo -e '#include "demon.h"\n\n'           	             > "$PROJECT_DIRECTORY"/main.cpp
+			echo -e 'int main(int argc, char* argv[]) {\n'          >> "$PROJECT_DIRECTORY"/main.cpp
+			echo -e '\tDemon demon;\n\tdemon.start();\n\treturn 0;' >> "$PROJECT_DIRECTORY"/main.cpp
+			echo -e '}'   >> "$PROJECT_DIRECTORY"/main.cpp         	>> "$PROJECT_DIRECTORY"/main.cpp
+		fi
+	fi
+}
+
 # Function to set the build directory based on project name
 function set_build_directory {    
 	
@@ -114,6 +120,32 @@ function set_build_directory {
 	
     # Ensure the build directory exists
     mkdir -p "$BUILD_DIR"
+}
+
+function configure_demo_project {
+
+	# Check for demo project argument and handle assets
+	ASSETS_DIR="$(pwd)/demos/assets"
+
+	if [ $# -gt 0 ] && [ -d "$(pwd)/demos/$1" ]; then
+		echo "-- Starting demo project: $1"
+		if [ ! -d "$ASSETS_DIR" ]; then
+			echo "Demo assets folder not found."
+			read -p "Download the 'assets' folder? (y/n): " response
+			if [[ "$response" =~ ^[Yy]$ ]]; then
+				echo "Downloading 'assets'..."
+				check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
+				check_command_success_status mkdir -p "$ASSETS_DIR"
+				check_command_success_status unzip assets.zip -d "$ASSETS_DIR"
+				check_command_success_status rm assets.zip
+				echo "'assets' downloaded and extracted successfully."
+			else
+				echo "Assets download canceled."
+				read -n 1 -s -r -p "Press any key to exit."
+				exit 1
+			fi
+		fi
+	fi
 }
 
 # Function to log CMake output
@@ -131,12 +163,9 @@ function log_cmake_output {
 # Configure project with CMake in the determined build directory
 function run_cmake_config {
     local cmake_arch_option=""
-    local project="-DUSER_PROJECT=-1"
-    
-    if [ -n "$1" ]; then
-        project="-DUSER_PROJECT=$1"
-    fi
-
+	local path=$(basename "$PROJECT_DIRECTORY")
+	local project="-DUSER_PROJECT=$path"
+	
     # Determine architecture options for Windows
     if [ "$OS_TYPE" = "Windows" ]; then
         cmake_arch_option="-A x64"
@@ -155,7 +184,7 @@ function run_cmake_build {
     log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
-# Set the build directory only once
+set_project_directory "$1"
 set_build_directory "$1"
 
 # Run CMake configuration and build

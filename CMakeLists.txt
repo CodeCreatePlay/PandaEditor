@@ -19,6 +19,7 @@ else()
     endif()
 endif()
 
+# ---------------- PANDA_EDITOR-SETUP ---------------- #
 # Directory Paths
 set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
@@ -35,18 +36,9 @@ if(USER_PROJECT AND NOT "${USER_PROJECT}" STREQUAL "-1")
         message(FATAL_ERROR "Specified project '${USER_PROJECT}' not found in demos or game directories.")
     endif()
 
-
     # Remove the main.cpp from the list of sources in GAME_DIR to avoid duplication
 	file(GLOB_RECURSE GAME_SOURCES ${GAME_DIR}/*.cpp)
 	list(REMOVE_ITEM GAME_SOURCES ${MAIN_SCRIPT})  # Remove the main.cpp that we already set
-else()
-    message(STATUS "No project specified. Including all files from game directory.")
-    set(MAIN_SCRIPT ${CMAKE_SOURCE_DIR}/main.cpp)
-    set(GAME_DIR ${CMAKE_SOURCE_DIR}/game)
-
-    # Gather source files from the entire game directory, excluding main.cpp
-    file(GLOB_RECURSE GAME_SOURCES ${GAME_DIR}/*.cpp)
-    list(FILTER GAME_SOURCES EXCLUDE REGEX "main.cpp")
 endif()
 
 # Gather other source files, excluding third-party directories and main.cpp
@@ -56,7 +48,6 @@ list(FILTER DEV_SOURCES EXCLUDE REGEX "main.cpp")
 
 # Set up the source list for the executable, ensuring only one main.cpp is included
 set(SOURCES ${MAIN_SCRIPT} ${DEV_SOURCES} ${GAME_SOURCES})
-# Print the contents of the SOURCES variable
 
 # Add the executable target
 add_executable(game ${SOURCES})
@@ -68,14 +59,7 @@ target_include_directories(game PRIVATE
     ${CMAKE_SOURCE_DIR}/game/include
 )
 
-# Force recompilation of the main script when rebuilding
-add_custom_target(
-    force_recompile_main ALL
-    COMMAND ${CMAKE_COMMAND} -E touch ${MAIN_SCRIPT}
-    COMMENT "Force recompilation."
-)
-add_dependencies(game force_recompile_main)
-
+# ---------------- PANDA3D-SETUP ---------------- #
 # Load Panda3D configuration
 if(EXISTS "${CMAKE_SOURCE_DIR}/config.cmake")
     include("${CMAKE_SOURCE_DIR}/config.cmake")
@@ -94,10 +78,7 @@ if(NOT PANDA_FRAMEWORK OR NOT PANDA_LIB OR NOT PANDAEXPRESS_LIB OR NOT DTOOL_LIB
     message(FATAL_ERROR "One or more Panda3D libraries were not found. Please check your installation.")
 endif()
 
-# Link Panda3D libraries
-target_include_directories(game PRIVATE ${PANDA3D_INCLUDE_DIR})
-target_link_libraries(game PRIVATE ${PANDA_FRAMEWORK} ${PANDA_LIB} ${PANDAEXPRESS_LIB} ${DTOOL_LIB} ${DTOOLCONFIG_LIB})
-
+# ---------------- IMGUI-SETUP ---------------- #
 # ImGui setup
 set(IMGUI_DIR ${THIRDPARTY_DIR_SRC}/imgui)
 if(EXISTS ${IMGUI_DIR})
@@ -114,9 +95,23 @@ else()
     message(FATAL_ERROR "ImGui not found. Ensure it is downloaded to the correct location.")
 endif()
 
+# ---------------- BUILD-SETUP ---------------- #
+# Force recompilation of the main script when rebuilding
+add_custom_target(
+    force_recompile_main ALL
+    COMMAND ${CMAKE_COMMAND} -E touch ${MAIN_SCRIPT}
+    COMMENT "Force recompilation."
+)
+add_dependencies(game force_recompile_main)
+
+# Link Panda3D libraries
+target_include_directories(game PRIVATE ${PANDA3D_INCLUDE_DIR})
+target_link_libraries(game PRIVATE ${PANDA_FRAMEWORK} ${PANDA_LIB} ${PANDAEXPRESS_LIB} ${DTOOL_LIB} ${DTOOLCONFIG_LIB})
+
 # Set C++ standard if needed
 # set_target_properties(game PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 
+# ---------------- POST_BUILD-SETUP ---------------- #
 # Optional: Add post-build command to run the game executable
 if(FALSE)  # Change to true to enable
     if(WIN32)
