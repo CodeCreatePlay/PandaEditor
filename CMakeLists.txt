@@ -24,16 +24,16 @@ endif()
 set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
 set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 
-# Select the main script and project directory based on USER_PROJECT variable
-if(USER_PROJECT AND NOT "${USER_PROJECT}" STREQUAL "-1")
-    if(EXISTS ${CMAKE_SOURCE_DIR}/demos/${USER_PROJECT})
-        set(MAIN_SCRIPT ${CMAKE_SOURCE_DIR}/demos/${USER_PROJECT}/main.cpp)
-        set(GAME_DIR ${CMAKE_SOURCE_DIR}/demos/${USER_PROJECT})
-    elseif(EXISTS ${CMAKE_SOURCE_DIR}/game/${USER_PROJECT})
-        set(MAIN_SCRIPT ${CMAKE_SOURCE_DIR}/game/${USER_PROJECT}/main.cpp)
-        set(GAME_DIR ${CMAKE_SOURCE_DIR}/game/${USER_PROJECT})
+# Select the main script and project directory based on PROJECT_PATH variable
+if(PROJECT_PATH AND NOT "${PROJECT_PATH}" STREQUAL "-1")
+    if(EXISTS ${CMAKE_SOURCE_DIR}/demos/${PROJECT_PATH})
+        set(MAIN_SCRIPT ${CMAKE_SOURCE_DIR}/demos/${PROJECT_PATH}/main.cpp)
+        set(GAME_DIR ${CMAKE_SOURCE_DIR}/demos/${PROJECT_PATH})
+    elseif(EXISTS ${CMAKE_SOURCE_DIR}/game/${PROJECT_PATH})
+        set(MAIN_SCRIPT ${CMAKE_SOURCE_DIR}/game/${PROJECT_PATH}/main.cpp)
+        set(GAME_DIR ${CMAKE_SOURCE_DIR}/game/${PROJECT_PATH})
     else()
-        message(FATAL_ERROR "Specified project '${USER_PROJECT}' not found in demos or game directories.")
+        message(FATAL_ERROR "Specified project '${PROJECT_PATH}' not found in demos or game directories.")
     endif()
 
     # Remove the main.cpp from the list of sources in GAME_DIR to avoid duplication

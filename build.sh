@@ -77,8 +77,35 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "ImGui setup completed."
 fi
 
-PROJECT_DIRECTORY="-1" # Global variable for project directory
-BUILD_DIR="" # Global variable for build directory
+PROJECT_NAME="-1" # project name
+PROJECT_PATH="-1" # project directory
+BUILD_DIR="-1" # build directory
+
+function prompt_user {
+	# Prompt the user for the project name
+	read -p "Enter the project name: " project_name
+
+	# Check if the project directory does not exist
+	if [ ! -z "$project_name" ] && { [ ! -d "$(pwd)/game/$project_name" ] && [ ! -d "$(pwd)/demos/$project_name" ]; }; then
+		read -p "Project '$project_name' does not exists. Do you want to create it now? (y/n): " choice
+		if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+			# If yes, then create project
+			echo "Creating project '$project_name'..."
+			check_command_success_status mkdir -p "$(pwd)/game/$project_name"
+			
+			# when you create a new project, create some starting boilerplate code as well
+			
+			
+		else
+			# Exit if the user chooses 'n'
+			exit 0
+		fi
+	fi
+
+	PROJECT_NAME="$project_name"
+	# read -n 1 -s -r -p "Press any key to continue..."
+	#exit 0
+}
 
 function set_project_directory {    
 
@@ -89,25 +116,22 @@ function set_project_directory {
 	fi
 	
 	if [ -n "$1" ] && [ -d "$(pwd)/demos/$1" ]; then
-		PROJECT_DIRECTORY="$(pwd)/demos/$1"
+		PROJECT_PATH="$(pwd)/demos/$1"
 		configure_demo_project "$1"
-	elif [ -n "$1" ] && [-d "$(pwd)/game/$1"]; then
-		PROJECT_DIRECTORY="$(pwd)/game/$1"
-	else
-		PROJECT_DIRECTORY="$(pwd)/game/default-project"
-		if [ ! -d "$PROJECT_DIRECTORY" ]; then
-			echo "-- No project found, creating a default project..."
-			mkdir -p "$PROJECT_DIRECTORY" # create project directory
-			touch "$PROJECT_DIRECTORY"/main.cpp # create a new main file for some boilerplate code
-			
-			echo -e '#include "demon.h"\n\n'           	             > "$PROJECT_DIRECTORY"/main.cpp
-			echo -e 'int main(int argc, char* argv[]) {\n'          >> "$PROJECT_DIRECTORY"/main.cpp
-			echo -e '\tDemon demon;\n\tdemon.start();\n\treturn 0;' >> "$PROJECT_DIRECTORY"/main.cpp
-			echo -e '}'   >> "$PROJECT_DIRECTORY"/main.cpp         	>> "$PROJECT_DIRECTORY"/main.cpp
+	elif [ -n "$1" ] && [ -d "$(pwd)/game/$1" ]; then
+		PROJECT_PATH="$(pwd)/game/$1"
+		
+		# if project directory is empty, as in the case when user has created a new project 
+		if [ -z "$(ls -A "$PROJECT_PATH")" ]; then
+			touch "$PROJECT_PATH"/main.cpp # create a new main file for some boilerplate code
+			echo -e '#include "demon.h"\n\n'           	             > "$PROJECT_PATH"/main.cpp
+			echo -e 'int main(int argc, char* argv[]) {\n'          >> "$PROJECT_PATH"/main.cpp
+			echo -e '\tDemon demon;\n\tdemon.start();\n\treturn 0;' >> "$PROJECT_PATH"/main.cpp
+			echo -e '}'   >> "$PROJECT_PATH"/main.cpp         	    >> "$PROJECT_PATH"/main.cpp
 		fi
 	fi
 	
-	local proj_name=$(basename "$PROJECT_DIRECTORY")
+	local proj_name=$(basename "$PROJECT_PATH")
 	echo "-- Starting project '$proj_name'"
 }
 
@@ -165,9 +189,9 @@ function log_cmake_output {
 # Configure project with CMake in the determined build directory
 function run_cmake_config {
     local cmake_arch_option=""
-	local path=$(basename "$PROJECT_DIRECTORY")
-	local project="-DUSER_PROJECT=$path"
-	
+	local path=$(basename "$PROJECT_PATH")
+	local project="-DPROJECT_PATH=$path"
+
     # Determine architecture options for Windows
     if [ "$OS_TYPE" = "Windows" ]; then
         cmake_arch_option="-A x64"
@@ -186,11 +210,12 @@ function run_cmake_build {
     log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
-set_project_directory "$1"
-set_build_directory "$1"
+prompt_user
+set_project_directory "$PROJECT_NAME"
+set_build_directory "$PROJECT_NAME"
 
 # Run CMake configuration and build
-run_cmake_config "$1"
+run_cmake_config "$PROJECT_NAME"
 run_cmake_build
 
 # Start the executable

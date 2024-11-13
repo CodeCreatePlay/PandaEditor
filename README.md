@@ -1,6 +1,12 @@
 # PandaEditor
 **An effort to make Panda3D more robust and user-friendly for artists and game developers by adding scene and level editor features, along with a new rendering pipeline. This project when completed will enable users to design, visualize, and organize projects directly within the editor, providing a cohesive environment to streamline the development process.**
 
+## TableOfContents
+1. [Building and Configuring PandaEditor Projects]()
+2. [HelloWorld Tutorial]()
+
+<h2 align="center">Building and Configuring PandaEditor Projects</h2>
+
 ### Prerequisites
 - Git
 - CMake (Version 3.14 or higher)
@@ -32,20 +38,8 @@ set(PANDA3D_INCLUDE_DIR "path_to_your_panda3d_include_directory")
 ```
 
 ### Starting the build
-Use the included `build.sh` script to start the build. The executable should launch automatically at the end. To start it manually later, you can find it in `builds/project-name/Release` (or equivalent) directory. 
+Use the included `build.sh` script to start the build. The executable should launch automatically at the end. To start it manually later, you can find it in `builds/project-name/Release` (or equivalent) directory. The `build.sh` script will prompt you to enter the project name. If the specified project is not found, you'll have the option to create it; otherwise, the script would exit.
  
-**Creating a new project:** The `game` directory is the default directory for projects, the build supports a project-based approach, allowing you to specify a custom project and an appropriate build directory is created for each project.
-
-- **Default Behavior:** If no specific project is specified, build system will create a `default-project` build folder and all source files from `game` directory are linked.
-
-- **Project-Based Builds:** To start a new project you specify the optional command line argument `USER_PROJECT` which is the name of the project you want to start, for example.
-
-```
-# bash
-# replace 'your-project-name' with the name of your project
-source build.sh your-project-name
-```
-
 The system will search for specified project in two directories `game` and `demos`, then source files from only the specified project directory are included.
 
 Here is an example of how the project strcuture should look like.
@@ -68,15 +62,56 @@ src/
 
 ```
 
-### Running demo projects
-Demos are located in the `demos` folder. To start a demo project, specify the name of the demo project as a command-line argument to the build script.
-
-```
-# bash
-# Example for running a demo project
-source build.sh roaming-ralph
-```
-
 ### Common Issues
 - Panda3D Library Not Found: Verify `config.cmake` contains the correct paths.
 - Unsupported Compiler: Ensure you're using a supported compiler (MSVC on Windows; GCC or Clang elsewhere).
+
+<h2 align="center">HelloWorld tutorial</h2>
+
+PandaEditor uses the `Demon` class to set up and initialize the underlying Panda3D game engine and editor environment. To start PandaEditor with minimal setup, you only need to create an instance of the `Demon` class and call its start method.
+
+```
+#include "demon.h"
+
+int main(int argc, char* argv[]) {
+    // Create an instance of the Demon class
+    Demon demon;
+
+    // your code goes here...
+
+    // Initialize and start the PandaEditor
+    demon.start();
+
+    // Exit the program
+    return 0;  
+}
+
+```
+
+Or you can subclass from `Demon` class itself, also this is the recommended approach.
+
+```
+#include "Demon.h"
+
+class MyApp : public Demon {
+public:
+    MyApp() { 
+        // your code goes here...
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    MyApp app;
+    app.start();
+    return 0;
+}
+```
+
+**Create a New Project Directory** Create a new directory in `game` folder and rename it appropriately for example 'HelloWorldProject'; each folder in `game` represents a unique folder, put all code related to a particular project in its corresponding project folder in `game` directory.
+	
+**Create a Source File** Inside your new project folder, create a source file. Then, copy and paste one of the example code snippets provided above into this file.
+
+**Build the Project** Back in PandaEditor main directory, start the `build.sh` script as explained in `Starting the build` section above.
+
+**Starting Demo projects** `Demos` are projects just like user defined projects in `game` folder, to start a demo, simply enter the name of the demo as the project name, when build starts, the build would proceed as explained above.
