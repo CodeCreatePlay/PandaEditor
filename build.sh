@@ -95,7 +95,6 @@ function set_project_directory {
 		PROJECT_DIRECTORY="$(pwd)/game/$1"
 	else
 		PROJECT_DIRECTORY="$(pwd)/game/default-project"
-		echo "running default project!"
 		if [ ! -d "$PROJECT_DIRECTORY" ]; then
 			echo "-- No project found, creating a default project..."
 			mkdir -p "$PROJECT_DIRECTORY" # create project directory
@@ -107,6 +106,9 @@ function set_project_directory {
 			echo -e '}'   >> "$PROJECT_DIRECTORY"/main.cpp         	>> "$PROJECT_DIRECTORY"/main.cpp
 		fi
 	fi
+	
+	local proj_name=$(basename "$PROJECT_DIRECTORY")
+	echo "-- Starting project '$proj_name'"
 }
 
 # Function to set the build directory based on project name
