@@ -136,22 +136,31 @@ function get_project {
 
 	# Check if the project directory does not exist
 	if [ ! -z "$project_name" ] && { [ ! -d "$(pwd)/game/$project_name" ] && [ ! -d "$(pwd)/demos/$project_name" ]; }; then
-		read -p "Project '$project_name' does not exists. Do you want to create it now? (y/n): " choice
-		if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-			# If yes, then create project
-			echo "Creating project '$project_name'..."
-			check_command_success_status mkdir -p "$(pwd)/game/$project_name"
-		else
-			clear
-			print_project_tree
-			echo ""
-			get_project
-		fi
+		while true; do
+			# Prompt user to create the project or exit
+			read -p "Project '$project_name' does not exist. Create it now? (y/n, -1 to exit): " choice
+
+			if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+				# If yes, then create project
+				echo "Creating project '$project_name'..."
+				check_command_success_status mkdir -p "$(pwd)/game/$project_name"
+				break  # Exit the loop after creating the project
+			elif [[ "$choice" == "n" || "$choice" == "N" ]]; then
+				clear
+				print_project_tree
+				echo ""
+				get_project  # Call get_project again to prompt for a new project name
+				break
+			elif [[ "$choice" == "-1" ]]; then
+				exit 1  # Exit the script
+			else
+				# If input is irrelevant, do nothing and re-prompt
+				echo -e "-- Invalid input. Please enter 'y', 'n', or '-1'.\n"
+			fi
+		done
 	fi
 
 	PROJECT_NAME="$project_name"
-	# read -n 1 -s -r -p "Press any key to continue..."
-	#exit 0
 }
 
 function set_project_directory {    
