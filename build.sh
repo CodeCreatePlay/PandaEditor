@@ -77,11 +77,60 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "ImGui setup completed."
 fi
 
+# Function to display folder structure with custom annotations
+print_project_tree() {
+
+	local base_dir="$(pwd)"
+	
+	# Define annotations for the top-level directories
+	declare -A annotations=(
+		["game"]="  # Main directory for user-defined projects"
+		["demos"]=" # Directory for demo projects"
+		["builds"]="# Directory for build output"
+	)
+
+	echo -e "PandaEditor Project Configuration and Build System\n"
+	echo "src"
+
+	# Loop through specific directories (game, demos, builds) inside src
+	for top_level_dir in "game" "demos" "builds"; do
+		# Check if each specified directory exists in base_dir
+		if [ -d "$base_dir/$top_level_dir" ]; then
+			echo "├── $top_level_dir ${annotations[$top_level_dir]}"
+			
+			# Get a list of top-level folders in each directory
+			local sub_dirs=("$base_dir/$top_level_dir"/*)
+			local count=0
+			local total_subdirs=${#sub_dirs[@]}
+			
+			# Loop through only the top-level folders in each directory
+			for sub_dir in "${sub_dirs[@]}"; do
+
+				if [ -d "$sub_dir" ]; then
+					count=$((count + 1))
+
+					# Check if it's the last item
+					if [ "$count" -eq "$total_subdirs" ]; then
+						echo "│   └── $(basename "$sub_dir")"  # Last item with └──
+					else
+						echo "│   ├── $(basename "$sub_dir")"  # Other items with ├──
+					fi
+				fi
+			done
+			
+			if [ "$top_level_dir" == "game" ] || [ "$top_level_dir" == "demos" ] ; then
+				echo "│"
+			fi
+			
+		fi
+	done
+}
+
 PROJECT_NAME="-1" # project name
 PROJECT_PATH="-1" # project directory
 BUILD_DIR="-1" # build directory
 
-function prompt_user {
+function get_project {
 	# Prompt the user for the project name
 	read -p "Enter the project name: " project_name
 
@@ -92,13 +141,11 @@ function prompt_user {
 			# If yes, then create project
 			echo "Creating project '$project_name'..."
 			check_command_success_status mkdir -p "$(pwd)/game/$project_name"
-			
-			# when you create a new project, create some starting boilerplate code as well
-			
-			
 		else
-			# Exit if the user chooses 'n'
-			exit 0
+			clear
+			print_project_tree
+			echo ""
+			get_project
 		fi
 	fi
 
@@ -210,7 +257,11 @@ function run_cmake_build {
     log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
-prompt_user
+# Starting point
+print_project_tree
+echo ""
+
+get_project
 set_project_directory "$PROJECT_NAME"
 set_build_directory "$PROJECT_NAME"
 
