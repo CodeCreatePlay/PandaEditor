@@ -77,118 +77,217 @@ if [ ! -d "$THIRDPARTY_DIR/imgui" ]; then
     echo "ImGui setup completed."
 fi
 
+declare -A USERS_PROJECTS
+declare -A DEMO_PROJECTS
+
 # Function to display folder structure with custom annotations
 print_project_tree() {
+    local base_dir="$(pwd)"
+    
+    # Define annotations for the top-level directories
+    declare -A annotations=(
+        ["game"]="  # Main directory for user-defined projects"
+        ["demos"]=" # Directory for demo projects"
+        ["builds"]="# Directory for build output"
+    )
 
-	local base_dir="$(pwd)"
+    echo -e "PandaEditor Project Configuration and Build System\n"
+    echo "src"
+
+
+	local total_projects_count=0
 	
-	# Define annotations for the top-level directories
-	declare -A annotations=(
-		["game"]="  # Main directory for user-defined projects"
-		["demos"]=" # Directory for demo projects"
-		["builds"]="# Directory for build output"
-	)
+    # Loop through specific directories (game, demos, builds) inside src
+    for top_level_dir in "game" "demos" "builds"; do
+        local dir_path="$base_dir/$top_level_dir"
 
-	echo -e "PandaEditor Project Configuration and Build System\n"
-	echo "src"
+        # Check if the directory exists
+        if [ -d "$dir_path" ]; then
+            echo "├── $top_level_dir ${annotations[$top_level_dir]}"
+            
+            # Get a list of subdirectories (only top-level folders)
+            local sub_dirs=("$dir_path"/*/)
+            local total_subdirs=${#sub_dirs[@]}
 
-	# Loop through specific directories (game, demos, builds) inside src
-	for top_level_dir in "game" "demos" "builds"; do
-		# Check if each specified directory exists in base_dir
-		if [ -d "$base_dir/$top_level_dir" ]; then
-			echo "├── $top_level_dir ${annotations[$top_level_dir]}"
-			
-			# Get a list of top-level folders in each directory
-			local sub_dirs=("$base_dir/$top_level_dir"/*)
-			local count=0
-			local total_subdirs=${#sub_dirs[@]}
-			
-			# Loop through only the top-level folders in each directory
-			for sub_dir in "${sub_dirs[@]}"; do
+            # Initialize an empty list to store project names for later use
+            local count=0
+            for sub_dir in "${sub_dirs[@]}"; do
+                # Check if the directory is valid
+                if [ -d "$sub_dir" ]; then
+                    local dir_name=$(basename "$sub_dir")
+                    count=$((count + 1))
 
-				if [ -d "$sub_dir" ]; then
-					count=$((count + 1))
-
-					# Check if it's the last item
-					if [ "$count" -eq "$total_subdirs" ]; then
-						echo "│   └── $(basename "$sub_dir")"  # Last item with └──
-					else
-						echo "│   ├── $(basename "$sub_dir")"  # Other items with ├──
+                    # Check if it's the 'assets' directory
+                    if [ "$dir_name" == "assets" ]; then
+						continue
 					fi
-				fi
-			done
-			
-			if [ "$top_level_dir" == "game" ] || [ "$top_level_dir" == "demos" ] ; then
-				echo "│"
-			fi
-			
-		fi
-	done
+
+                    # Collect user and demo projects
+					total_projects_count=$((total_projects_count+1))
+                    if [ "$top_level_dir" == "game" ]; then
+                        USERS_PROJECTS[$total_projects_count]="$dir_name"
+                    elif [ "$top_level_dir" == "demos" ]; then
+                        DEMO_PROJECTS[$total_projects_count]="$dir_name"
+                    fi
+
+					# Print subdirectory with proper formatting
+					if [ "$top_level_dir" == "game" ] || [ "$top_level_dir" == "demos" ]; then
+						if [ "$count" -eq "$total_subdirs" ]; then
+							echo "│   └── $total_projects_count. $dir_name"  # Last item with └──
+						else
+							echo "│   ├── $total_projects_count. $dir_name"  # Other items with ├──
+						fi
+					else
+						if [ "$count" -eq "$total_subdirs" ]; then
+							echo "│   └── $count. $dir_name"  # Last item with └──
+						else
+							echo "│   ├── $count. $dir_name"  # Other items with ├──
+						fi
+					fi
+					
+                fi
+            done
+
+            # Add extra line for 'game' and 'demos' directories
+            if [ "$top_level_dir" == "game" ] || [ "$top_level_dir" == "demos" ]; then
+                echo "│"
+            fi
+        fi
+    done
+	
+	echo ""
 }
 
-PROJECT_NAME="-1" # project name
-PROJECT_PATH="-1" # project directory
-BUILD_DIR="-1" # build directory
+
+PROJECT_NAME="" # project name
+PROJECT_PATH="" # project directory
+BUILD_DIR="" # build directory
 
 function get_project {
-	# Prompt the user for the project name
-	read -p "Enter the project name: " project_name
 
-	# Check if the project directory does not exist
-	if [ ! -z "$project_name" ] && { [ ! -d "$(pwd)/game/$project_name" ] && [ ! -d "$(pwd)/demos/$project_name" ]; }; then
-		while true; do
-			# Prompt user to create the project or exit
-			read -p "Project '$project_name' does not exist. Create it now? (y/n, -1 to exit): " choice
+    while true; do
+        # Prompt the user for the project name
+        read -p "Enter project name, index or -1 to exit: " project_name
 
-			if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-				# If yes, then create project
-				echo "Creating project '$project_name'..."
-				check_command_success_status mkdir -p "$(pwd)/game/$project_name"
-				break  # Exit the loop after creating the project
-			elif [[ "$choice" == "n" || "$choice" == "N" ]]; then
-				clear
-				print_project_tree
-				echo ""
-				get_project  # Call get_project again to prompt for a new project name
-				break
-			elif [[ "$choice" == "-1" ]]; then
-				exit 1  # Exit the script
+		# Validate input
+		if [[ -z "$project_name" ]]; then
+			echo -e "Project name cannot be empty. Please try again.\n"
+			continue
+		elif [[ "$project_name" == "-1" ]]; then
+			# Handle exit condition first
+			exit 1
+		elif [[ "${project_name:0:1}" == "-" ]]; then
+			echo -e "Invalid project name: Projects name must not start with '-'. Please try again.\n"
+			continue
+		elif [[ "$project_name" =~ [^a-zA-Z0-9_-] ]]; then
+			echo -e "Invalid project name: Only letters, numbers, hyphens (-), and underscores (_) are allowed. Please try again.\n"
+			continue
+		elif [ "$project_name" == "assets" ]; then
+			# 'assets' is a reserved folder
+			echo -e "Invalid project name, try again.\n"
+			continue
+		elif [[ "$project_name" =~ ^[0-9]+$ ]]; then
+			# Handle purely numeric names
+			if [[ -v USERS_PROJECTS[$project_name] ]]; then
+				project_name="${USERS_PROJECTS[$project_name]}"
+			elif [[ -v DEMO_PROJECTS[$project_name] ]]; then
+				project_name="${DEMO_PROJECTS[$project_name]}"
 			else
-				# If input is irrelevant, do nothing and re-prompt
-				echo -e "-- Invalid input. Please enter 'y', 'n', or '-1'.\n"
+				echo -e "Invalid project name: Names cannot be purely numeric. Please try again.\n"
+				continue
 			fi
-		done
-	fi
+		fi
 
-	PROJECT_NAME="$project_name"
+        # Check if the project directory already exists
+        if [[ -d "$(pwd)/game/$project_name" ]]; then
+            PROJECT_PATH="$(pwd)/game/$project_name"
+            PROJECT_NAME="$project_name"
+            break
+        elif [[ -d "$(pwd)/demos/$project_name" ]]; then
+            PROJECT_PATH="$(pwd)/demos/$project_name"
+            PROJECT_NAME="$project_name"
+			
+			# configure demo assets folder
+			echo "Demo assets folder not found."
+			read -p "Download the 'assets' folder? (y/n): " response
+			case "$response" in
+				[yY])
+					echo "Downloading 'assets'..."
+					check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
+					check_command_success_status mkdir -p "$assets_dir"
+					check_command_success_status unzip assets.zip -d "$assets_dir"
+					check_command_success_status rm assets.zip
+					echo "'assets' folder downloaded and extracted successfully."
+					;;
+				[nN])
+					echo -e "Assets download canceled. Please choose another project.\n"
+					continue
+					;;
+				*)
+					echo -e "Invalid input. Please enter 'y' or 'n'.\n"
+					continue
+					;;
+			esac
+			
+            break
+        fi
+
+        # Handle non-existent project
+        echo "Project '$project_name' does not exist."
+        while true; do
+            read -p "Create project '$project_name'? (y/n, -1 to exit): " choice
+            case "$choice" in
+                [yY])
+                    check_command_success_status mkdir -p "$(pwd)/game/$project_name"
+                    PROJECT_PATH="$(pwd)/game/$project_name" # Set PROJECT_PATH to the created directory
+                    PROJECT_NAME="$project_name"             # Set PROJECT_NAME to the new project
+                    break 2 # Exit both loops after creation
+                    ;;
+                [nN])
+                    echo -e "Please enter a different project name.\n"
+                    break # Re-prompt for a project name
+                    ;;
+                "-1")
+                    exit 1 # Exit the script
+                    ;;
+                *)
+                    echo -e "Invalid input. Please enter 'y', 'n', or '-1'.\n"
+                    ;;
+            esac
+        done
+    done
 }
 
-function set_project_directory {    
+function configure_project {
 
 	if [ -n "$1" ] && [ ! -d "$(pwd)/demos/$1" ] && [ ! -d "$(pwd)/game/$1" ]; then
 		echo "Specified project $1 not found!"
 		read -n 1 -s -r -p "Press any key to continue..."
 		exit 1
 	fi
-	
-	if [ -n "$1" ] && [ -d "$(pwd)/demos/$1" ]; then
-		PROJECT_PATH="$(pwd)/demos/$1"
-		configure_demo_project "$1"
-	elif [ -n "$1" ] && [ -d "$(pwd)/game/$1" ]; then
-		PROJECT_PATH="$(pwd)/game/$1"
 		
-		# if project directory is empty, as in the case when user has created a new project 
-		if [ -z "$(ls -A "$PROJECT_PATH")" ]; then
-			touch "$PROJECT_PATH"/main.cpp # create a new main file for some boilerplate code
-			echo -e '#include "demon.h"\n\n'           	             > "$PROJECT_PATH"/main.cpp
-			echo -e 'int main(int argc, char* argv[]) {\n'          >> "$PROJECT_PATH"/main.cpp
-			echo -e '\tDemon demon;\n\tdemon.start();\n\treturn 0;' >> "$PROJECT_PATH"/main.cpp
-			echo -e '}'   >> "$PROJECT_PATH"/main.cpp         	    >> "$PROJECT_PATH"/main.cpp
-		fi
+	# Check if the project directory is empty
+	if [ ! "$(find "$PROJECT_PATH" -mindepth 1 -maxdepth 1 | read)"]; then
+		# Create a new main.cpp file with boilerplate code
+		cat <<EOF > "$PROJECT_PATH/main.cpp"
+#include "Demon.h"
+
+class MyApp : public Demon {
+public:
+	MyApp() { 
+		// your code goes here...
+	}
+};
+
+int main(int argc, char* argv[]) {
+	MyApp app;
+	app.start();
+	return 0;
+}
+EOF
 	fi
 	
-	local proj_name=$(basename "$PROJECT_PATH")
-	echo "-- Starting project '$proj_name'"
+	echo -e "Starting project '$(basename "$PROJECT_PATH")' \n"
 }
 
 # Function to set the build directory based on project name
@@ -202,32 +301,6 @@ function set_build_directory {
 	
     # Ensure the build directory exists
     mkdir -p "$BUILD_DIR"
-}
-
-function configure_demo_project {
-
-	# Check for demo project argument and handle assets
-	ASSETS_DIR="$(pwd)/demos/assets"
-
-	if [ $# -gt 0 ] && [ -d "$(pwd)/demos/$1" ]; then
-		echo "-- Starting demo project: $1"
-		if [ ! -d "$ASSETS_DIR" ]; then
-			echo "Demo assets folder not found."
-			read -p "Download the 'assets' folder? (y/n): " response
-			if [[ "$response" =~ ^[Yy]$ ]]; then
-				echo "Downloading 'assets'..."
-				check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
-				check_command_success_status mkdir -p "$ASSETS_DIR"
-				check_command_success_status unzip assets.zip -d "$ASSETS_DIR"
-				check_command_success_status rm assets.zip
-				echo "'assets' downloaded and extracted successfully."
-			else
-				echo "Assets download canceled."
-				read -n 1 -s -r -p "Press any key to exit."
-				exit 1
-			fi
-		fi
-	fi
 }
 
 # Function to log CMake output
@@ -261,17 +334,15 @@ function run_cmake_config {
 
 # Build project with CMake
 function run_cmake_build {
-    # : > "$BUILD_DIR"/cmake_build_output.log
+    : > "$BUILD_DIR"/build-log.log
     echo -e "\n\nStarting Build..." >> "$BUILD_DIR"/build-log.log
     log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
 # Starting point
 print_project_tree
-echo ""
-
 get_project
-set_project_directory "$PROJECT_NAME"
+configure_project "$PROJECT_NAME"
 set_build_directory "$PROJECT_NAME"
 
 # Run CMake configuration and build
@@ -284,6 +355,8 @@ EXECUTABLE_NAME="game"
 if [ "$OS_TYPE" = "Windows" ]; then
     EXECUTABLE_NAME="game.exe"
 fi
+
+echo "Checking for executable in $BUILD_DIR/Release/$EXECUTABLE_NAME"
 
 # Check if the executable exists in the expected directory
 if [ -f "$BUILD_DIR/Release/$EXECUTABLE_NAME" ]; then
