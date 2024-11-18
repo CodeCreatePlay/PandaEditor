@@ -207,28 +207,32 @@ function get_project {
             PROJECT_PATH="$(pwd)/demos/$project_name"
             PROJECT_NAME="$project_name"
 			
-			# configure demo assets folder
-			echo "Demo assets folder not found."
-			read -p "Download the 'assets' folder? (y/n): " response
-			case "$response" in
-				[yY])
-					echo "Downloading 'assets'..."
-					check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
-					check_command_success_status mkdir -p "$assets_dir"
-					check_command_success_status unzip assets.zip -d "$assets_dir"
-					check_command_success_status rm assets.zip
-					echo "'assets' folder downloaded and extracted successfully."
-					;;
-				[nN])
-					echo -e "Assets download canceled. Please choose another project.\n"
-					continue
-					;;
-				*)
-					echo -e "Invalid input. Please enter 'y' or 'n'.\n"
-					continue
-					;;
-			esac
-			
+			# check if assets folder exists
+			if [ ! -d "$(pwd)/demos/assets" ]; then
+				# configure demo assets folder
+				echo "Demo assets folder not found."
+				while true; do
+					read -p "Download the 'assets' folder? (y/n): " response
+					case "$response" in
+						[yY])
+							echo "Downloading 'assets'..."
+							check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
+							check_command_success_status mkdir -p "$assets_dir"
+							check_command_success_status unzip assets.zip -d "$assets_dir"
+							check_command_success_status rm assets.zip
+							echo "'assets' folder downloaded and extracted successfully."
+							;;
+						[nN])
+							echo -e "Assets download canceled. Please choose another project.\n"
+							continue 2
+							;;
+						*)
+							echo -e "Invalid input. Please enter 'y' or 'n'.\n"
+							continue 1
+							;;
+					esac
+				done
+			fi
             break
         fi
 
@@ -266,8 +270,8 @@ function configure_project {
 		exit 1
 	fi
 		
-	# Check if the project directory is empty
-	if [ ! "$(find "$PROJECT_PATH" -mindepth 1 -maxdepth 1 | read)"]; then
+	# if the project directory is empty
+	if [ -z "$(find "$PROJECT_PATH" -mindepth 1 -maxdepth 1)" ]; then
 		# Create a new main.cpp file with boilerplate code
 		cat <<EOF > "$PROJECT_PATH/main.cpp"
 #include "Demon.h"

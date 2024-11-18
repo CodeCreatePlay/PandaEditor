@@ -1,4 +1,4 @@
-#include "include/engine.h"
+#include "engine.h"
 
 
 Engine::Engine() : aspect_ratio(1.0f) {
@@ -11,7 +11,7 @@ Engine::Engine() : aspect_ratio(1.0f) {
 
     // Initialize Panda3D engine and create window
     create_win();
-    setup_input_handling();
+    setup_mouse_keyboard(mouse_watcher);
     mouse = Mouse(DCAST(GraphicsWindow, win), mouse_watcher);
     create_3d_render();
     create_2d_render();
@@ -61,7 +61,6 @@ void Engine::create_3d_render() {
 
     render = NodePath("render");
     render.node()->set_attrib(RescaleNormalAttrib::make_default());
-    // render.node()->set_attrib(ShadeModelAttrib::make(ShadeModelAttrib::M_smooth));
     render.set_two_sided(0);
 
     mouse_watcher->set_display_region(dr);
@@ -130,7 +129,7 @@ void Engine::reset_clock() {
     AsyncTaskManager::get_global_ptr()->set_clock(ClockObject::get_global_clock());
 }
 
-void Engine::setup_input_handling() {
+void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
 
     if (!win->is_of_type(GraphicsWindow::get_class_type()) &&
         DCAST(GraphicsWindow, win)->get_num_input_devices() > 0)
@@ -139,13 +138,13 @@ void Engine::setup_input_handling() {
     GraphicsWindow *window = DCAST(GraphicsWindow, win);
 
     MouseAndKeyboard* mouse_and_keyboard = new MouseAndKeyboard(window, 0, "MouseAndKeyboard_01");
+	MouseWatcher*     mouse_watcher = new MouseWatcher("MouseWatcher_01");
+	ButtonThrower*    button_thrower = new ButtonThrower("Button_Thrower_01");
+	
     NodePath mk_node = data_root.attach_new_node(mouse_and_keyboard);
-
-    mouse_watcher = new MouseWatcher("MouseWatcher_01");
     NodePath mouse_watcher_np = mk_node.attach_new_node(mouse_watcher);
-
-    PT(ButtonThrower) button_thrower = new ButtonThrower("Button_Thrower_01");
-    NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
+	NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
+	// DCAST(ButtonThrower, button_thrower_np.node())->set_prefix("");
 
     if (win->get_side_by_side_stereo()) {
         mouse_watcher->set_display_region(win->get_overlay_display_region());
@@ -157,7 +156,7 @@ void Engine::setup_input_handling() {
     mb.add_button(KeyboardButton::alt());
     mb.add_button(KeyboardButton::meta());
     mouse_watcher->set_modifier_buttons(mb);
-
+	
     ModifierButtons mods;
     mods.add_button(KeyboardButton::shift());
     mods.add_button(KeyboardButton::control());
@@ -166,6 +165,8 @@ void Engine::setup_input_handling() {
     button_thrower->set_modifier_buttons(mods);
 
     mouse_watchers.push_back(mouse_watcher_np);
+	
+	mw = mouse_watcher;
 }
 
 void Engine::add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {

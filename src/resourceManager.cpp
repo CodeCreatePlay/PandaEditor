@@ -60,7 +60,7 @@ PT(Texture) ResourceManager::load_texture(
 		
 	return ResourceManager::load_texture(path, options, false, isCubeMap);
 }
-	
+
 PT(Texture) ResourceManager::load_texture(
 	const std::string& path,
 	const LoaderOptions& options,
@@ -78,59 +78,6 @@ PT(Texture) ResourceManager::load_texture(
 		return TexturePool::load_texture(Filename(path), 0, readMipmaps, options);
 	}
 }
-
-/*
-PT(Texture) ResourceManager::load_texture(
-    const std::string& path,
-    const LoaderOptions& loader_options,
-    SamplerState::FilterType minfilter,
-    SamplerState::FilterType magfilter,
-    bool cube_map,
-    bool readMipmaps,
-	bool multiview,
-    int anisotropicDegree) {
-
-    PT(Texture) texture = nullptr;
-
-    std::ifstream file(path);
-    if (file.is_open()) {
-        file.close();
-
-        LoaderOptions options = loader_options;
-
-        if (multiview) {
-            int flags = options.get_texture_flags();
-            flags |= LoaderOptions::TF_multiview;
-            options.set_texture_flags(flags);
-        }
-
-        if (!cube_map) {
-            // Load a 2D texture
-            texture = TexturePool::load_texture(Filename(path), 0, readMipmaps, options);
-        }
-        else {
-            // Load a cube map texture
-            std::string texture_pattern = ""; // This should be set appropriately
-            texture = TexturePool::load_cube_map(Filename(texture_pattern), readMipmaps, options);
-        }
-
-        if (texture) {
-            if (minfilter != SamplerState::FT_linear) {
-                texture->set_minfilter(minfilter);
-            }
-            if (magfilter != SamplerState::FT_linear) {
-                texture->set_magfilter(magfilter);
-            }
-            texture->set_anisotropic_degree(anisotropicDegree);
-        }
-    }
-    else {
-        std::cerr << "Unable to load texture, path is not a file " << path << std::endl;
-    }
-
-    return texture;
-}
-*/
 
 void ResourceManager::load_font(const std::string& font) {
     // Implement font loading logic here

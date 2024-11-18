@@ -1,4 +1,4 @@
-#include "include/mouse.h"
+#include "mouse.h"
 
 
 Mouse::Mouse() : x(0), y(0), dx(0), dy(0) {}

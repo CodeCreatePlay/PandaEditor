@@ -1,5 +1,6 @@
 #include "include/animUtils.h"
 
+
 // Bind animations that are children of the character NodePath
 void AnimUtils::bind_anims(NodePath character_np, AnimControlCollection& acc) {
 	// Get the PartBundle from the character NodePath

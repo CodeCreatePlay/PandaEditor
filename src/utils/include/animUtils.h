@@ -5,6 +5,7 @@
 #include <animBundleNode.h>
 #include <partBundle.h>
 
+
 class AnimUtils {
 public:
 	// Bind animations that are children of the character NodePath

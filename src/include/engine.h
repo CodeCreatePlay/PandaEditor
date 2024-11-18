@@ -76,7 +76,9 @@ public:
 
     float get_aspect_ratio();
     LVecBase2i get_size();
-
+	
+	void setup_mouse_keyboard(MouseWatcher*& mw);
+	
     void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
 	void remove_event_hook(int key);
 
@@ -89,7 +91,6 @@ private:
     void create_default_scene();
     void create_axis_grid();
     void reset_clock();
-    void setup_input_handling();
     void process_events(const Event* event);
     void on_evt_size();
 

@@ -1,42 +1,56 @@
-#include <genericAsyncTask.h>
-#include <config_putil.h>
-#include "include/demon.h"
+#include "demon.h"
 
 
-Demon::Demon() {
+Demon::Demon() : game(&engine) {
+
 	setup_paths();
+	game.init();
 
-	engine.add_event_hook(0, [this](const Event* evt, const std::vector<void*>& params) {
-		this->on_evt(evt, params);
-	});
+	engine.add_event_hook(0,
+		[this](const Event* evt, const std::vector<void*>& params) { this->on_evt(evt, params); }
+	);
+	
+	auto task_mgr = AsyncTaskManager::get_global_ptr();
+	PT(GenericAsyncTask) my_task = new GenericAsyncTask(
+		"MainUpdateLoop",
+		[](GenericAsyncTask* task, void* user_data) { static_cast<Engine*>(user_data)->update(task); return AsyncTask::DS_cont; },
+		this
+	);
+	task_mgr->add(my_task);
 }
 
 Demon::~Demon() {}
 
-void Demon::setup_paths() {
-	std::string path = PathUtils::get_current_working_dir();
-	get_model_path().prepend_directory(Filename::from_os_specific(path));
-}
-
-void Demon::on_evt(const Event* evt, const std::vector<void*>&) {}
-
 void Demon::start() {
-	
-	auto task_mgr = AsyncTaskManager::get_global_ptr();
-	PT(GenericAsyncTask) my_task = new GenericAsyncTask("MainUpdateLoop",
-		[](GenericAsyncTask* task, void* user_data) {
-			static_cast<Engine*>(user_data)->update(task);
-			return AsyncTask::DS_cont;  // Task continues running
-		},
-		this
-	);
-	task_mgr->add(my_task);
 	
 	while (!engine.win->is_closed()) {
 		AsyncTaskManager::get_global_ptr()->poll();
 	}
 }
 
+void Demon::setup_paths() {
+	std::string path = PathUtils::get_current_working_dir();
+	get_model_path().prepend_directory(Filename::from_os_specific(path));
+}
+
+void Demon::enable_game_mode() {
+	// hide editor only geometry
+	
+	// disable editor camera
+	engine.dr->set_camera(NodePath());
+}
+
+void Demon::exit_game_mode() {
+	// show editor only geometry
+	
+	
+	// enable editor camera
+	engine.dr->set_camera(engine.scene_cam);
+}
+
+void Demon::on_evt(const Event* evt, const std::vector<void*>&) {
+	// std::cout << evt->get_name() << std::endl;
+}
 
 /*
 imgui integration

@@ -41,13 +41,12 @@ if(PROJECT_PATH AND NOT "${PROJECT_PATH}" STREQUAL "-1")
 	list(REMOVE_ITEM GAME_SOURCES ${MAIN_SCRIPT})  # Remove the main.cpp that we already set
 endif()
 
-# Gather other source files, excluding third-party directories and main.cpp
-file(GLOB_RECURSE DEV_SOURCES ${SOURCE_DIR}/*.cpp)
-list(FILTER DEV_SOURCES EXCLUDE REGEX "${THIRDPARTY_DIR_SRC}/.*")
-list(FILTER DEV_SOURCES EXCLUDE REGEX "main.cpp")
+# Gather source files, excluding third-party directories and main.cpp
+file(GLOB_RECURSE SOURCE_FILES ${SOURCE_DIR}/*.cpp)
+list(FILTER SOURCE_FILES EXCLUDE REGEX "${THIRDPARTY_DIR_SRC}/.*")
 
 # Set up the source list for the executable, ensuring only one main.cpp is included
-set(SOURCES ${MAIN_SCRIPT} ${DEV_SOURCES} ${GAME_SOURCES})
+set(SOURCES ${MAIN_SCRIPT} ${SOURCE_FILES} ${GAME_SOURCES})
 
 # Add the executable target
 add_executable(game ${SOURCES})

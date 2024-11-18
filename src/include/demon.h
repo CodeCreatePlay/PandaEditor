@@ -3,8 +3,12 @@
 
 #include <asyncTask.h>
 #include <genericAsyncTask.h>
-#include "..//utils/include/pathUtils.h"
+#include <config_putil.h>
+#include <nodePath.h>
+
 #include "engine.h"
+#include "game.h"
+#include "..//utils/include/pathUtils.h"
 // #include "..//p3d_imgui/p3d_Imgui.hpp"
 // #include "imgui.h"
 
@@ -13,13 +17,15 @@ class Demon {
 public:
     Demon();
     ~Demon();
+		
+	void start();
+	void setup_paths();
+	void enable_game_mode();
+	void exit_game_mode();
+	void on_evt(const Event* evt, const std::vector<void*>&);
 	
 	Engine engine;
-	
-	void setup_paths();
-	void on_evt(const Event* evt, const std::vector<void*>&);
-	void start();
-	bool temp;
+	Game game;
 	
 	/*
 	// imgui
