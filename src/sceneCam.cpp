@@ -1,8 +1,5 @@
-#include <cmath>
-#include <lquaternion.h>
-
-#include "include/engine.h"
 #include "include/sceneCam.h"
+#include "include/engine.h"
 
 
 SceneCam::SceneCam(float speed, const LVecBase3f& default_pos)
@@ -51,9 +48,9 @@ NodePath* SceneCam::create_axes(float thickness, float length) {
 
 void SceneCam::initialize(Engine* engine) {
     win = DCAST(GraphicsWindow, engine->win);
-    mouse_watcher_node = engine->mouse_watcher;
+    mwn = engine->mouse_watcher;
+	mouse = &engine->mouse;
     aspect2d = &engine->aspect2d;
-    mouse = &engine->mouse;
 
     axes = create_axes();
     axes->set_name("SceneCameraAxes");
@@ -104,23 +101,27 @@ void SceneCam::orbit(const LVecBase2f& delta) {
 }
 
 void SceneCam::update() {
-    if (!mouse_watcher_node->has_mouse() ||
-        !mouse_watcher_node->is_button_down(KeyboardButton::alt())) {
+	
+    if (!mwn->has_mouse() ||
+        !mwn->is_button_down(KeyboardButton::alt())) {
         return;
     }
+	
+    // Get delta time
+    tempSpeed = speed * ClockObject::get_global_clock()->get_dt();
 
     // Orbit - If left input down
-    if (mouse->is_button_down(0))
-        orbit(LVecBase2f(mouse->get_dx() * speed, mouse->get_dy() * speed));
+    if (mwn->is_button_down(MouseButton::one()))
+        orbit(LVecBase2f(mouse->get_dx() * tempSpeed, mouse->get_dy() * tempSpeed));
     
     // Dolly - If middle input down
-    else if (mouse->is_button_down(1)) {
-        move(LVecBase3f(mouse->get_dx() * speed, 0, -mouse->get_dy() * speed));
+    else if (mwn->is_button_down(MouseButton::two())) {
+        move(LVecBase3f(mouse->get_dx() * tempSpeed, 0, -mouse->get_dy() * tempSpeed));
     }
 
     // Zoom - If right input down
-    else if (mouse->is_button_down(2)) {
-        move(LVecBase3f(0, -mouse->get_dx() * speed, 0));
+    else if (mwn->is_button_down(MouseButton::three())) {
+        move(LVecBase3f(0, -mouse->get_dx() * tempSpeed, 0));
     }
     
     update_axes();
@@ -137,16 +138,6 @@ void SceneCam::update_axes() {
     axes->set_quat(camera_quat);
 }
 
-void SceneCam::on_resize_event(float aspect_ratio) {
-    Lens* lens = DCAST(Camera, cam_np.node())->get_lens();
-
-    if (lens) {
-        DCAST(PerspectiveLens, lens)->set_aspect_ratio(aspect_ratio);
-    }
-
-    update_axes();
-}
-
 void SceneCam::reset() {
     // Reset camera and target back to default positions
     target->set_pos(LVecBase3f(0, 0, 0));
@@ -155,6 +146,16 @@ void SceneCam::reset() {
     // Set camera to look at target
     look_at(target->get_pos());
     target->set_quat(get_quat());
+
+    update_axes();
+}
+
+void SceneCam::on_resize_event(float aspect_ratio) {
+    Lens* lens = DCAST(Camera, cam_np.node())->get_lens();
+
+    if (lens) {
+        DCAST(PerspectiveLens, lens)->set_aspect_ratio(aspect_ratio);
+    }
 
     update_axes();
 }

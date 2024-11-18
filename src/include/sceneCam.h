@@ -1,15 +1,19 @@
 #ifndef SCENE_CAMERA_H
 #define SCENE_CAMERA_H
 
+#include <cmath>
+#include <lquaternion.h>
+
 #include <lvecBase2.h>
 #include <lvecBase3.h>
-#include <lineSegs.h>
 #include <graphicsWindow.h>
 #include <mouseWatcher.h>
+#include <mouseButton.h>
 #include <keyboardButton.h>
 #include <perspectiveLens.h>
 #include <camera.h>
 #include <nodePath.h>
+#include <lineSegs.h>
 
 
 // Forward declaration
@@ -18,7 +22,7 @@ class Mouse;
 
 class SceneCam : public NodePath {
 public:
-    SceneCam(float speed = 0.5f, const LVecBase3f& default_pos = LVecBase3f(300, 400, 350));
+    SceneCam(float speed = 20.0f, const LVecBase3f& default_pos = LVecBase3f(300, 400, 350));
     
     NodePath* create_axes(float thickness = 1.0f, float length = 25.0f);
     void initialize(Engine* engine);
@@ -26,12 +30,14 @@ public:
     void orbit(const LVecBase2f& delta);
     void update();
     void update_axes();
+	void reset();
+	void enable();
+	void disable();
     void on_resize_event(float aspect_ratio);
-    void reset();
 
 private:
     GraphicsWindow* win;
-    MouseWatcher*   mouse_watcher_node;
+    MouseWatcher*   mwn;
 
     NodePath*       axes;
     NodePath        cam_np;
@@ -42,6 +48,9 @@ private:
     LVecBase3f      default_pos;
 
     NodePath*       target;
+	
+	// cache
+	float 			tempSpeed;
 };
 
 #endif // SCENE_CAMERA_H

@@ -6,7 +6,6 @@
 
 #include <graphicsWindow.h>
 #include <mouseWatcher.h>
-#include <mouseButton.h>
 
 
 class Mouse {
@@ -15,7 +14,7 @@ public:
     Mouse(GraphicsWindow* win, MouseWatcher* mwn);
 
     void update();
-    const bool is_button_down(int idx) const;
+	
     const float get_dx() const;
     const float get_dy() const;
     const float get_x()  const;
@@ -29,8 +28,7 @@ private:
     float y;  // mouse pos y
     float dx; // mouse displacement x since last frame
     float dy; // mouse displacement y since last frame
-        
-    std::unordered_map<int, ButtonHandle> mouse_btns;
+	
     MouseData mData; // mouse position from GraphicsWindow
 };
 
