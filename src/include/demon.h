@@ -1,14 +1,9 @@
 #ifndef DEMON_H
 #define DEMON_H
 
-#include <asyncTask.h>
-#include <genericAsyncTask.h>
-#include <config_putil.h>
-#include <nodePath.h>
-
 #include "engine.h"
 #include "game.h"
-#include "..//utils/include/pathUtils.h"
+#include "levelEditor.hpp"
 // #include "..//p3d_imgui/p3d_Imgui.hpp"
 // #include "imgui.h"
 
@@ -26,6 +21,7 @@ public:
 	
 	Engine engine;
 	Game game;
+	LevelEditor le;
 	
 	/*
 	// imgui

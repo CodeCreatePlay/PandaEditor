@@ -1,3 +1,4 @@
+#include <sstream>
 #include "engine.h"
 
 
@@ -58,10 +59,12 @@ void Engine::create_3d_render() {
     dr = win->make_display_region();
     dr->set_clear_color_active(true);
     dr->set_clear_color(LColor(0.3, 0.3, 0.3, 1.0));
+	dr->set_sort(-1);
 
     render = NodePath("render");
     render.node()->set_attrib(RescaleNormalAttrib::make_default());
     render.set_two_sided(0);
+	render.set_shader_auto(true);
 
     mouse_watcher->set_display_region(dr);
 
@@ -77,7 +80,8 @@ void Engine::create_2d_render() {
     dr2d->set_active(true);
 
     render2d = NodePath("Render2d");
-    render2d.set_depth_test(false);
+	// render2d.set_shader_auto(true);
+	render2d.set_depth_test(false);
     render2d.set_depth_write(false);
 
     aspect2d = render2d.attach_new_node("Aspect2d");
@@ -104,8 +108,8 @@ void Engine::create_2d_render() {
     cam2d.reparent_to(render2d);
 
     OrthographicLens *lens = new OrthographicLens();
-    lens->set_film_size(2, 2);
-    lens->set_near_far(-1000, 1000);
+    lens->set_film_size(1, 1);
+    lens->set_near_far(-100, 100);
     (DCAST(Camera, cam2d.node()))->set_lens(lens);
 
     dr2d->set_camera(cam2d);
@@ -125,7 +129,7 @@ void Engine::create_axis_grid() {
 
 void Engine::reset_clock() {
     ClockObject::get_global_clock()->set_real_time(TrueClock::get_global_ptr()->get_short_time());
-    TrueClock::get_global_ptr();
+	ClockObject::get_global_clock()->tick();
     AsyncTaskManager::get_global_ptr()->set_clock(ClockObject::get_global_clock());
 }
 
@@ -173,11 +177,27 @@ void Engine::add_event_hook(int key, std::function<void(const Event*, const std:
 	
 	auto result = evt_hooks.emplace(key, hook);
 	
-	if (result.second) {
+	if (result.second)
+	{
 		evt_hooks[key] = hook;
     }
-	else {
-        std::cout << "Unable to set event hook, Key: " << key << " already exists!" << std::endl;
+	else
+	{
+        std::ostringstream message;
+        message << "Unable to set event hook, Key: " << key << " already exists! Available keys: ";
+
+        for (auto it = evt_hooks.begin(); it != evt_hooks.end(); ++it) {
+            message << it->first << ", ";
+        }
+
+        std::string output = message.str();
+		
+        // Remove the trailing comma and space
+        if (!evt_hooks.empty()) {
+            output = output.substr(0, output.size() - 2);
+        }
+
+        std::cout << output << std::endl;
     }
 }
 
@@ -248,7 +268,7 @@ void Engine::on_evt_size() {
 	}
 }
 
-void Engine::update(GenericAsyncTask*) {    
+void Engine::update() { 
     // traverse the data graph.This reads all the control
     // inputs(from the mouse and keyboard, for instance) and also
     // directly acts upon them(for instance, to move the avatar).
@@ -259,16 +279,13 @@ void Engine::update(GenericAsyncTask*) {
         process_events(event_queue->dequeue_event());
     }
 
-    //
+    // update mouse and camera
     mouse.update();
     scene_cam.update();
 
     // update callbacks
     for (const auto& callback : update_callbacks)
         callback();
-
-    // finally, render frame
-    engine->render_frame();
 }
 
 float Engine::get_aspect_ratio() {

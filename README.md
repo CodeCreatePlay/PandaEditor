@@ -59,7 +59,6 @@ src/
 │   ├── AnotherProject        # Build output for AnotherProject
 │   ├── YetAnotherProject     # Build output for YetAnotherProject
 │   └── roaming-ralph         # Build output for Roaming Ralph demo
-
 ```
 
 ### Common Issues
@@ -112,6 +111,6 @@ int main(int argc, char* argv[]) {
 	
 **Create a Source File** Inside your new project folder, create a source file. Then, copy and paste one of the example code snippets provided above into this file.
 
-**Build the Project** Back in PandaEditor main directory, start the `build.sh` script as explained in `Starting the build` section above.
+**Build the Project** Back in PandaEditor main directory, start the `build.sh` script as explained in `Starting the build` section above, to start the build.
 
 **Starting Demo projects** `Demos` are projects just like user defined projects in `game` folder, to start a demo, simply enter the name of the demo as the project name, when build starts, the build would proceed as explained above.

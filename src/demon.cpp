@@ -1,22 +1,29 @@
+#include <asyncTask.h>
+#include <genericAsyncTask.h>
+#include <config_putil.h>
+#include <nodePath.h>
+
+#include "pathUtils.h"
+#include "taskUtils.hpp"
 #include "demon.h"
 
 
-Demon::Demon() : game(&engine) {
+Demon::Demon() : game(&engine), le(&engine, &game) {
 
 	setup_paths();
 	game.init();
+	le.init();
 
 	engine.add_event_hook(0,
 		[this](const Event* evt, const std::vector<void*>& params) { this->on_evt(evt, params); }
 	);
-	
-	auto task_mgr = AsyncTaskManager::get_global_ptr();
-	PT(GenericAsyncTask) my_task = new GenericAsyncTask(
-		"MainUpdateLoop",
-		[](GenericAsyncTask* task, void* user_data) { static_cast<Engine*>(user_data)->update(task); return AsyncTask::DS_cont; },
-		this
-	);
-	task_mgr->add(my_task);
+
+	PT(AsyncTask) update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
+		engine.update(); return AsyncTask::DS_cont;
+	}, "EngineUpdate"));
+	update_task->set_sort(0);
+
+	AsyncTaskManager::get_global_ptr()->add(update_task);
 }
 
 Demon::~Demon() {}
@@ -24,7 +31,11 @@ Demon::~Demon() {}
 void Demon::start() {
 	
 	while (!engine.win->is_closed()) {
+		// update task manager
 		AsyncTaskManager::get_global_ptr()->poll();
+		
+		// finally, render frame
+		engine.engine->render_frame();
 	}
 }
 

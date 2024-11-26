@@ -1,8 +1,20 @@
+#include <map>
+#include <string>
+#include <vector>
+
+#include <asyncTask.h>
+#include <displayRegion.h>
+#include <mouseWatcher.h>
+#include <perspectiveLens.h>
+#include <orthographicLens.h>
+#include <nodePath.h>
+
+#include "engine.h"
 #include "game.h"
 
 
 // Constructor
-Game::Game(Engine* engine) : engine(engine), dr3D(nullptr), dr2D(nullptr), active_scene(nullptr) {}
+Game::Game(Engine* engine) : engine(engine), dr3D(nullptr), dr2D(nullptr) { }
 
 // Initialize the game
 void Game::init() {
@@ -56,6 +68,10 @@ void Game::init() {
 	NodePath enviro = engine->resourceManager.load_model("models/environment");
 	enviro.reparent_to(render);
 	main_cam.set_pos(0, 15, -50);
+	
+	NodePath smiley = engine->resourceManager.load_model("models/smiley");
+	smiley.reparent_to(render);
+	smiley.set_pos(0, 30, 30);
 	*/
 }
 
@@ -65,7 +81,7 @@ void Game::update_task() {}
 void Game::create_dr3D() {
 	
     dr3D = engine->win->make_display_region(0, 0.4, 0, 0.35);
-    dr3D->set_sort(10);
+    dr3D->set_sort(-1);
     dr3D->set_clear_color_active(true);
     dr3D->set_clear_depth_active(true);
     dr3D->set_clear_color(LVecBase4(0.65f, 0.65f, 0.65f, 1.0f));
@@ -76,6 +92,6 @@ void Game::create_dr2D() {
 
     dr2D = engine->win->make_display_region(0, 0.4, 0, 0.35);
     dr2D->set_clear_depth_active(false);
-    dr2D->set_sort(20);
+    dr2D->set_sort(10);
     dr2D->set_active(true);
 }

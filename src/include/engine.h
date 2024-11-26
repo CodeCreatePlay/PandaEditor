@@ -72,7 +72,7 @@ public:
 
     // methods
 	void add_update_callback(void(*callback)());
-    void update(GenericAsyncTask*);
+    void update();
 
     float get_aspect_ratio();
     LVecBase2i get_size();
