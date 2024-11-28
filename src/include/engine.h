@@ -15,6 +15,8 @@
 #include <graphicsPipe.h>
 #include <graphicsPipeSelection.h>
 #include <graphicsEngine.h>
+// camera and lenses
+#include <orthographicLens.h>
 // Input and Event-Handling headers
 #include <mouseWatcher.h>
 #include <mouseAndKeyboard.h>
@@ -32,8 +34,7 @@
 #include "sceneCam.h"
 #include "axisGrid.h"
 #include "resourceManager.h"
-#include "renderer.h"
-#include "..//utils/include/mouse.h"
+#include "mouse.h"
 
 
 class Engine {
@@ -52,6 +53,7 @@ public:
 
     MouseWatcher* mouse_watcher = nullptr;
     std::vector<NodePath> mouse_watchers;
+	std::vector<NodePath> button_throwers;
 
     NodePath data_root;
     DataGraphTraverser data_graph_trav;
@@ -67,7 +69,6 @@ public:
 
     Mouse mouse;
     ResourceManager resourceManager;
-    Renderer renderer;
     AxisGrid axisGrid;
 
     // methods

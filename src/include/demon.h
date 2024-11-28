@@ -4,8 +4,8 @@
 #include "engine.h"
 #include "game.h"
 #include "levelEditor.hpp"
-// #include "..//p3d_imgui/p3d_Imgui.hpp"
-// #include "imgui.h"
+#include "p3d_Imgui.hpp"
+#include "imgui.h"
 
 
 class Demon {
@@ -23,14 +23,12 @@ public:
 	Game game;
 	LevelEditor le;
 	
-	/*
 	// imgui
     Panda3DImGui p3d_imgui;
 	void setup_imgui();
 	void setup_imgui_render(Panda3DImGui* panda3d_imgui_helper);
 	void setup_imgui_button(Panda3DImGui* panda3d_imgui_helper);
 	static void on_imgui_new_frame();
-	*/
 };
 
 #endif

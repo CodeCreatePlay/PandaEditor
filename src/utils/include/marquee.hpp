@@ -29,7 +29,7 @@ public:
         quad.reparent_to(_engine->render2d);
 
         // Load and set the shader
-        quad.set_shader(Shader::load(Shader::SL_GLSL, "marquee.vert", "marquee.frag"));
+        quad.set_shader(Shader::load(Shader::SL_GLSL, "assets/shaders/marquee.vert", "assets/shaders/marquee.frag"));
 		quad.set_shader_input("viewport", _engine->get_size());
         quad.set_shader_input("start",    LVecBase2(0.0, 0.0));
         quad.set_shader_input("end",      LVecBase2(0.0, 0.0));

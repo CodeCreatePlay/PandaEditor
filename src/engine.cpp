@@ -91,7 +91,7 @@ void Engine::create_2d_render() {
     // the lowerleft corner is (xsize, -ysize), in this coordinate system.
     // NodePath());
 
-    PGTop* top_node = new PGTop("my_top_node");
+    PGTop* top_node = new PGTop("Pixel2d");
     pixel2d = render2d.attach_new_node(top_node);
     pixel2d.set_pos(-1, 0, 1);
 
@@ -108,8 +108,8 @@ void Engine::create_2d_render() {
     cam2d.reparent_to(render2d);
 
     OrthographicLens *lens = new OrthographicLens();
-    lens->set_film_size(1, 1);
-    lens->set_near_far(-100, 100);
+    lens->set_film_size(2, 2);
+    lens->set_near_far(-1000, 1000);
     (DCAST(Camera, cam2d.node()))->set_lens(lens);
 
     dr2d->set_camera(cam2d);
@@ -142,11 +142,13 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
     GraphicsWindow *window = DCAST(GraphicsWindow, win);
 
     MouseAndKeyboard* mouse_and_keyboard = new MouseAndKeyboard(window, 0, "MouseAndKeyboard_01");
-	MouseWatcher*     mouse_watcher = new MouseWatcher("MouseWatcher_01");
+	MouseWatcher*     mouse_watcher  = new MouseWatcher("MouseWatcher_01");
 	ButtonThrower*    button_thrower = new ButtonThrower("Button_Thrower_01");
+	// button_thrower->add_parameter(EventParameter(this));
+	
 	
     NodePath mk_node = data_root.attach_new_node(mouse_and_keyboard);
-    NodePath mouse_watcher_np = mk_node.attach_new_node(mouse_watcher);
+    NodePath mouse_watcher_np  = mk_node.attach_new_node(mouse_watcher);
 	NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
 	// DCAST(ButtonThrower, button_thrower_np.node())->set_prefix("");
 
@@ -169,6 +171,7 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
     button_thrower->set_modifier_buttons(mods);
 
     mouse_watchers.push_back(mouse_watcher_np);
+	button_throwers.push_back(button_thrower_np);
 	
 	mw = mouse_watcher;
 }
@@ -297,14 +300,14 @@ LVecBase2i Engine::get_size() {
     if (win != nullptr) {
 
         if (DCAST(GraphicsWindow, win) && win->has_size()) {
-            GraphicsWindow* gwin = DCAST(GraphicsWindow, win);
-            LVecBase2i size = gwin->get_size();
-			return LVecBase2i(size.get_x(), size.get_y());
+            // GraphicsWindow* gwin = DCAST(GraphicsWindow, win);
+            // LVecBase2i size = gwin->get_size();
+			return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
         }
     }
 
-    WindowProperties props = WindowProperties::get_default();
-    return LVecBase2i(props.get_x_size(), props.get_y_size());
+    // WindowProperties props = WindowProperties::get_default();
+    return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
 }
 
 void Engine::exit() {

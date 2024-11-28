@@ -53,8 +53,9 @@ add_executable(game ${SOURCES})
 
 # Include directories for the target
 target_include_directories(game PRIVATE 
-    ${CMAKE_SOURCE_DIR}/src/include 
-    ${CMAKE_SOURCE_DIR}/src/utils/include 
+    ${SOURCE_DIR}/include 
+    ${SOURCE_DIR}/utils/include 
+	${SOURCE_DIR}/imgui
     ${CMAKE_SOURCE_DIR}/game/include
 )
 
