@@ -10,15 +10,32 @@
 
 Demon::Demon() : game(&engine), le(&engine, &game), p3d_imgui(engine.win, engine.pixel2d) {
 
+	// 1. Init
 	setup_paths();
-	//game.init();
+	game.init();
 	le.init();
 	setup_imgui();
-
+	
+	// 2. Setup game and editor viewport camera masks
+	BitMask32 ed_mask   = BitMask32::bit(0) | BitMask32::bit(1);
+	BitMask32 game_mask = BitMask32::bit(1);
+	
+	DCAST(Camera, engine.scene_cam.node())->set_camera_mask(ed_mask);
+	DCAST(Camera, engine.cam2d.node())->set_camera_mask(ed_mask);
+	
+	DCAST(Camera, game.main_cam.node())->set_camera_mask(game_mask);
+	DCAST(Camera, game.cam2D.node())->set_camera_mask(game_mask);
+	
+	// hide editor only geo from game view
+	engine.axisGrid.hide(game_mask);
+	engine.render2d.find("**/SceneCameraAxes").hide(game_mask);
+	
+	// 3. Add an event hook to catch events
 	engine.add_event_hook(0,
 		[this](const Event* evt, const std::vector<void*>& params) { this->on_evt(evt, params); }
 	);
-
+	
+	// 4. Create update task
 	PT(AsyncTask) update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
 		engine.update(); return AsyncTask::DS_cont;
 	}, "EngineUpdate"));
@@ -114,11 +131,9 @@ void Demon::setup_imgui_button(Panda3DImGui* panda3d_imgui_helper) {
 	ButtonThrower* bt_node = DCAST(ButtonThrower, bt.node());
 	std::string ev_name;
 
+	// ----------------------------------------------
 	ev_name = bt_node->get_button_down_event();
-	
-	// 
-	if (ev_name.empty())
-	{
+	if (ev_name.empty()) {
 		ev_name = "imgui-button-down";
 		bt_node->set_button_down_event(ev_name);
 	}
@@ -129,9 +144,8 @@ void Demon::setup_imgui_button(Panda3DImGui* panda3d_imgui_helper) {
 		static_cast<Panda3DImGui*>(user_data)->on_button_down_or_up(button, true);
 	}, panda3d_imgui_helper);
 
-	// 
+	// ----------------------------------------------
 	ev_name = bt_node->get_button_up_event();
-	
 	if (ev_name.empty()) {
 		ev_name = "imgui-button-up";
 		bt_node->set_button_up_event(ev_name);
@@ -143,9 +157,8 @@ void Demon::setup_imgui_button(Panda3DImGui* panda3d_imgui_helper) {
 		static_cast<Panda3DImGui*>(user_data)->on_button_down_or_up(button, false);
 	}, panda3d_imgui_helper);
 
-	// 
+	// ----------------------------------------------
 	ev_name = bt_node->get_keystroke_event();
-	
 	if (ev_name.empty()) {
 		ev_name = "imgui-keystroke";
 		bt_node->set_keystroke_event(ev_name);
