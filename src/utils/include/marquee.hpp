@@ -110,7 +110,7 @@ public:
 
 		for (int i = 0; i < matching_nodes.get_num_paths(); ++i) {
 			NodePath child = matching_nodes.get_path(i);
-			continue;
+
 			if (child.is_empty()) {
 				continue;
 			}

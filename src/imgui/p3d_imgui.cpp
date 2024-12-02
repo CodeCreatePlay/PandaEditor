@@ -103,9 +103,7 @@ private:
 Panda3DImGui::Panda3DImGui(GraphicsWindow* window, NodePath parent): window_(window)
 {
     root_ = parent.attach_new_node("imgui-root", 1000);
-
     context_ = ImGui::CreateContext();
-
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup back-end capabilities flags

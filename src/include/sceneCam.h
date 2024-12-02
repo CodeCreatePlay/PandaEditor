@@ -38,11 +38,11 @@ public:
 private:
     GraphicsWindow* win;
     MouseWatcher*   mwn;
+	NodePath*       aspect2d;
+    Mouse*          mouse;
 
     NodePath*       axes;
     NodePath        cam_np;
-    NodePath*       aspect2d;
-    Mouse*          mouse;
 
     float           speed;
     LVecBase3f      default_pos;

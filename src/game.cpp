@@ -67,12 +67,12 @@ void Game::init() {
 	// test scene
 	NodePath enviro = engine->resourceManager.load_model("models/environment");
 	enviro.reparent_to(render);
-	main_cam.set_pos(0, 15, -50);
+	// main_cam.set_pos(0, 15, -50);
 	
 	NodePath smiley = engine->resourceManager.load_model("models/smiley");
 	smiley.reparent_to(render);
-	smiley.set_pos(0, 30, 30);
-	*/
+	smiley.set_pos(0, 30, 30
+	/*
 }
 
 void Game::update_task() {}
