@@ -110,24 +110,7 @@ Panda3DImGui::Panda3DImGui(GraphicsWindow* window, NodePath parent): window_(win
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 }
 
-Panda3DImGui::~Panda3DImGui()
-{
-#if defined(__WIN32__) || defined(_WIN32)
-    if (enable_file_drop_)
-    {
-        if (window_.is_valid_pointer())
-        {
-            window_->remove_window_proc(window_proc_.get());
-            window_proc_.reset();
-            if (auto handle = window_->get_window_handle())
-                DragAcceptFiles((HWND)handle->get_int_handle(), FALSE);
-        }
-    }
-#endif
-
-    ImGui::DestroyContext();
-    context_ = nullptr;
-}
+Panda3DImGui::~Panda3DImGui() {}
 
 void Panda3DImGui::setup_style(Style style)
 {
@@ -478,4 +461,26 @@ NodePath Panda3DImGui::create_geomnode(const GeomVertexData* vdata)
     geom_node->add_geom(geom, RenderState::make_empty());
 
     return NodePath(geom_node);
+}
+
+void Panda3DImGui::clean_up() {
+
+#if defined(__WIN32__) || defined(_WIN32)
+    if (enable_file_drop_) {
+        if (window_.is_valid_pointer()) {
+            window_->remove_window_proc(window_proc_.get());
+            window_proc_.reset();
+            if (auto handle = window_->get_window_handle())
+                DragAcceptFiles((HWND)handle->get_int_handle(), FALSE);
+        }
+    }
+#endif
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.BackendPlatformName = nullptr;
+    io.BackendPlatformUserData = nullptr;
+    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad);
+
+    ImGui::DestroyContext();
+    context_ = nullptr;
 }

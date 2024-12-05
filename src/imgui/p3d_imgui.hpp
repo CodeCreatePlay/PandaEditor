@@ -77,6 +77,9 @@ public:
 
     /** Get mouse position when files are dropped. */
     const LVecBase2& get_dropped_point() const;
+	
+	/** clean up */
+	void clean_up();
 
 private:
     void setup_font_texture();
@@ -92,7 +95,7 @@ private:
 	
     struct GeomList
     {
-        PT(GeomVertexData) vdata;           // vertex data shared among the below GeomNodes
+        PT(GeomVertexData) vdata; // vertex data shared among the below GeomNodes
         std::vector<NodePath> nodepaths;
     };
     std::vector<GeomList> geom_data_;
@@ -105,7 +108,7 @@ private:
     LVecBase2 dropped_point_;
 };
 
-// ************************************************************************************************
+// -------------------------------------------------------------------------------------------
 
 inline ImGuiContext* Panda3DImGui::get_context() const
 {

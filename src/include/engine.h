@@ -43,11 +43,11 @@ public:
     ~Engine();
 
     // fields
-    GraphicsEngine* engine;
+    GraphicsEngine*  engine;
     PT(GraphicsPipe) pipe;
-    GraphicsWindow* win = nullptr;
-    DisplayRegion* dr;
-
+    GraphicsWindow*  win = nullptr;
+    DisplayRegion*   dr;
+	
     DisplayRegion* dr2d;
     MouseWatcher* mouse_watcher_2d;
 
@@ -83,7 +83,7 @@ public:
     void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
 	void remove_event_hook(int key);
 
-    void exit();
+    void clean_up();
 
 private:
     void create_win();

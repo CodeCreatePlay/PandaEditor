@@ -28,9 +28,7 @@ Engine::Engine() : aspect_ratio(1.0f) {
     reset_clock();
 }
 
-Engine::~Engine() {
-    exit();
-}
+Engine::~Engine() {}
 
 void Engine::add_update_callback(void(*callback)()) {
     // Check if the function pointer already exists in the vector
@@ -310,7 +308,34 @@ LVecBase2i Engine::get_size() {
     return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
 }
 
-void Engine::exit() {
+void Engine::clean_up() {
+
+	// 1. Remove all tasks
+    // Retrieve all tasks currently managed
+    AsyncTaskCollection all_tasks = AsyncTaskManager::get_global_ptr()->get_tasks();
+
+    // Remove each task
+    for (size_t i = 0; i < all_tasks.get_num_tasks(); ++i) {
+        PT(AsyncTask) task = all_tasks.get_task(i);
+        AsyncTaskManager::get_global_ptr()->remove(task);
+    }
+	
+	// 2. Empty event queue and remove event hooks
+	event_queue->clear();
+	EventHandler::get_global_event_handler()->remove_all_hooks();
+	
+	// 3. Remove render and render 2D
+	render.remove_node();
+	render2d.remove_node();
+	
+	// 4. Destroy loader
+	Loader::get_global_ptr()->stop_threads();
+
+	// 5. Clear render textures
+	GraphicsOutput *output = DCAST(GraphicsOutput, win);
+	output->clear_render_textures();
+	
+	// 6. Remove all windows
     win->set_active(false);
-    engine->remove_window(win);
+    // engine->remove_all_windows();
 }

@@ -72,7 +72,7 @@ void Game::init() {
 	NodePath smiley = engine->resourceManager.load_model("models/smiley");
 	smiley.reparent_to(render);
 	smiley.set_pos(0, 30, 30
-	/*
+	*/
 }
 
 void Game::update_task() {}

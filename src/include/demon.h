@@ -18,10 +18,13 @@ public:
 	void enable_game_mode();
 	void exit_game_mode();
 	void on_evt(const Event* evt, const std::vector<void*>&);
+	void exit();
 	
 	Engine engine;
 	Game game;
 	LevelEditor le;
+	
+	bool cleaned_up;
 	
 	// imgui
     Panda3DImGui p3d_imgui;
