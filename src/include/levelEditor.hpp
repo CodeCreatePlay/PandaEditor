@@ -5,20 +5,19 @@
 #include "marquee.hpp"
 
 
-class Engine;
-class Game;
+class Demon;
 
 class LevelEditor {
 public:
-    LevelEditor(Engine* engine, Game* game);
+    LevelEditor(Demon *demon);
 	void init();
 	std::vector<NodePath> get_selected_nps();
 
 private:
-	void on_event(const Event* evt, const std::vector<void*>&);
+	void on_mouse(std::vector<void*>& params);
+	void on_mouse_up(std::vector<void*>& params);
 
-    Engine*     engine;
-	Game*       game;
+	Demon*      demon;
 	MousePicker mouse_picker;
 	Marquee     marquee;
 	

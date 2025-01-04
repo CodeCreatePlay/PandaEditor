@@ -1,29 +1,38 @@
 #ifndef GAME_H
 #define GAME_H
 
-class NodePath;
+#include "p3d_Imgui.hpp"
+
+
 class MouseWatcher;
 class DisplayRegion;
-class Engine;
+class ButtonThrower;
+class NodePath;
+class Demon;
 
 class Game {
 public:
-    explicit Game(Engine* engine);
+    explicit Game(Demon* demon);
     void init();
-    void update_task();
+    void update();
 	
+	//ButtonThrower* button_thrower;
 	NodePath render;
     NodePath render2D;
+	NodePath pixel2D;
 	
 	NodePath main_cam;
 	NodePath cam2D;
 
     DisplayRegion* dr3D;
     DisplayRegion* dr2D;
+	
+	Panda3DImGui p3d_imgui;
+	MouseWatcher* mouse_watcher;
 
 private:
-    Engine* engine;
-    MouseWatcher* mouse_watcher;
+	Demon* demon;
+    // MouseWatcher* mouse_watcher;
 
     void create_dr2D();
     void create_dr3D();

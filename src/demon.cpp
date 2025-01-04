@@ -6,15 +6,30 @@
 #include "pathUtils.h"
 #include "taskUtils.hpp"
 #include "demon.h"
+#include "imgui.h"
 
 
-Demon::Demon() : game(&engine), le(&engine, &game), p3d_imgui(engine.win, engine.pixel2d), cleaned_up(false) {
+void on_fuck(std::vector<void*> params) {
+	std::cout << "Michelle's boobs\n";
+}
 
-	// 1. Init
+void on_fuck_ass(std::vector<void*> params) {
+	std::cout << "Michelle's ass\n";
+}
+
+Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
+	
+	// 1. Initialize
+	// init base editor
 	setup_paths();
+	init_imgui(&p3d_imgui, &engine.pixel2d, engine.mouse_watcher, "Editor");
+		
+	// init game and level editor
 	game.init();
+	init_imgui(&game.p3d_imgui, &game.pixel2D, game.mouse_watcher, "Game");
+	
+	// init_imgui_task();
 	le.init();
-	setup_imgui();
 	
 	// 2. Setup game and editor viewport camera masks
 	BitMask32 ed_mask   = BitMask32::bit(0) | BitMask32::bit(1);
@@ -29,20 +44,33 @@ Demon::Demon() : game(&engine), le(&engine, &game), p3d_imgui(engine.win, engine
 	// hide editor only geo from game view
 	engine.axisGrid.hide(game_mask);
 	engine.render2d.find("**/SceneCameraAxes").hide(game_mask);
-	
-	// 3. Add an event hook to catch events
-	engine.add_event_hook(0,
-		[this](const Event* evt, const std::vector<void*>& params) { this->on_evt(evt, params); }
-	);
-	
-	// 4. Create update task
+		
+	// 3. Create update task
 	PT(AsyncTask) update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
-		engine.update(); return AsyncTask::DS_cont;
+		
+		engine.update();
+		imgui_update();
+		engine.dispatch_events(mouse_over_ui);
+		engine.engine->render_frame();
+		
+		mouse_over_ui = false;
+		
+		return AsyncTask::DS_cont;
 	}, "EngineUpdate"));
-	update_task->set_sort(0);
-
+	
+	update_task->set_sort(MAIN_TASK_SORT);
 	AsyncTaskManager::get_global_ptr()->add(update_task);
-	exit();
+	
+	// 4. event hooks
+	engine.define_event("window", [this](std::vector<void*>& params) { this->handleWinEvent = true; }, {});
+	
+    // 5. Loop through all tasks in the task manager
+    auto task_mgr = AsyncTaskManager::get_global_ptr();
+    AsyncTaskCollection tasks = task_mgr->get_tasks();
+    for (int i = 0; i < tasks.get_num_tasks(); ++i) {
+        PT(AsyncTask) task = tasks.get_task(i);
+        std::cout << "Task " << i + 1 << ": " << task->get_name() << std::endl;
+    }
 }
 
 Demon::~Demon() { 
@@ -50,13 +78,9 @@ Demon::~Demon() {
 }
 
 void Demon::start() {
-	
 	while (!engine.win->is_closed()) {
-		// update task manager
 		AsyncTaskManager::get_global_ptr()->poll();
-		
-		// finally, render frame
-		engine.engine->render_frame();
+		handleWinEvent = false;		
 	}
 }
 
@@ -66,22 +90,61 @@ void Demon::setup_paths() {
 }
 
 void Demon::enable_game_mode() {
+	
 	// hide editor only geometry
+	engine.render.hide();
+	engine.render2d.hide();
 	
 	// disable editor camera
 	engine.dr->set_camera(NodePath());
+	
+	// set game mode to true
+	is_game_mode = true;
 }
 
 void Demon::exit_game_mode() {
-	// show editor only geometry
 	
-	
-	// enable editor camera
+	engine.render.show();
+	engine.render2d.show();
 	engine.dr->set_camera(engine.scene_cam);
+	is_game_mode = false;
 }
 
-void Demon::on_evt(const Event* evt, const std::vector<void*>&) {
-	// std::cout << evt->get_name() << std::endl;
+void Demon::update_game_view(GameViewStyle style) {
+    float width  = 0.4f;
+    float height = 0.4f;
+
+    switch (style) {
+        case CENTER:
+            game.dr3D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            game.dr2D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            break;
+
+        case BOTTOM_LEFT:
+            game.dr3D->set_dimensions(0, 0, width, 0, height);
+            game.dr2D->set_dimensions(0, 0, width, 0, height);
+            break;
+
+        case BOTTOM_RIGHT:
+            game.dr3D->set_dimensions(0, 1 - width, 1, 0, height);
+            game.dr2D->set_dimensions(0, 1 - width, 1, 0, height);
+            break;
+
+        case TOP_LEFT:
+            game.dr3D->set_dimensions(0, 0, width, 1 - height, 1);
+            game.dr2D->set_dimensions(0, 0, width, 1 - height, 1);
+            break;
+
+        case TOP_RIGHT:
+            game.dr3D->set_dimensions(0, 1 - width, 1, 1 - height, 1);
+            game.dr2D->set_dimensions(0, 1 - width, 1, 1 - height, 1);
+            break;
+
+        default:
+            game.dr3D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            game.dr2D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            break;
+    }
 }
 
 void Demon::exit() {
@@ -97,88 +160,73 @@ void Demon::exit() {
 }
 
 // ----------------------------------------- imgui integration ----------------------------------------- //
-void Demon::setup_imgui() {
-	// setup ImGUI for Panda3D
-	p3d_imgui.setup_style();
-    p3d_imgui.setup_geom();
-    p3d_imgui.setup_shader(Filename("assets/shaders"));
-    p3d_imgui.setup_font();
-    p3d_imgui.setup_event();
-
-    p3d_imgui.enable_file_drop();
+void Demon::init_imgui(Panda3DImGui *panda3d_imgui, NodePath *parent, MouseWatcher* mw, std::string name) {
 	
-	setup_imgui_render(&p3d_imgui);
-	setup_imgui_button(&p3d_imgui);
-
-    EventHandler::get_global_event_handler()->add_hook(
-        "window-event",
-        [](const Event*, void* user_data) { static_cast<Panda3DImGui*>(user_data)->on_window_resized(); },
-        & p3d_imgui);
+	// Setup ImGUI for Panda3D
+	panda3d_imgui->init(engine.win, mw, parent);
+	panda3d_imgui->setup_style();
+    panda3d_imgui->setup_geom();
+    panda3d_imgui->setup_shader(Filename("assets/shaders"));
+    panda3d_imgui->setup_font();
+    panda3d_imgui->setup_event();
+    panda3d_imgui->enable_file_drop();
+	
+	if (name == "Editor")
+		engine.define_event("editor_imgui", [this](std::vector<void*>& params){ return this->DoImGUI(); }, {});
+	// game imgui is defined by user
 }
 
-void Demon::setup_imgui_render(Panda3DImGui* panda3d_imgui_helper) {
+void Demon::imgui_update() {
 	
-    auto task_mgr = AsyncTaskManager::get_global_ptr();
-
-    // NOTE: ig_loop has process_events and 50 sort.
-    PT(GenericAsyncTask) new_frame_imgui_task = new GenericAsyncTask("new_frame_imgui", [](GenericAsyncTask*, void* user_data) {
-        static_cast<Panda3DImGui*>(user_data)->new_frame_imgui();
-        return AsyncTask::DS_cont;
-    }, panda3d_imgui_helper);
-    new_frame_imgui_task->set_sort(3);
-    task_mgr->add(new_frame_imgui_task);
-
-    PT(GenericAsyncTask) render_imgui_task = new GenericAsyncTask("render_imgui", [](GenericAsyncTask*, void* user_data) {
-        static_cast<Panda3DImGui*>(user_data)->render_imgui();
-        return AsyncTask::DS_cont;
-    }, panda3d_imgui_helper);
-    render_imgui_task->set_sort(4);
-    task_mgr->add(render_imgui_task);
+	// editor ui update
+	ImGui::SetCurrentContext(this->p3d_imgui.context_);
+	this->p3d_imgui.new_frame_imgui();
+	this->handle_imgui_mouse(this->engine.mouse_watcher, &this->p3d_imgui);
+	
+	if (this->handleWinEvent)
+		this->p3d_imgui.on_window_resized();
+	
+	for (auto event_it = engine.event_map["editor_imgui"].begin(); event_it != engine.event_map["editor_imgui"].end(); ++event_it)
+		event_it->callable(event_it->optional_params);
+	
+	if(ImGui::IsWindowHovered()) { mouse_over_ui = true; }
+	
+	this->p3d_imgui.render_imgui();
+	
+	// game view imgui
+	ImGui::SetCurrentContext(this->game.p3d_imgui.context_);
+	this->game.p3d_imgui.new_frame_imgui();
+	this->handle_imgui_mouse(this->game.mouse_watcher, &this->game.p3d_imgui);
+	
+	if (this->handleWinEvent)
+		this->game.p3d_imgui.on_window_resized();
+	 
+	for (auto event_it = engine.event_map["game_imgui"].begin(); event_it != engine.event_map["game_imgui"].end(); ++event_it)
+		event_it->callable(event_it->optional_params);
+	
+	if(ImGui::IsWindowHovered()) { mouse_over_ui = true; }
+	
+	if (ImGui::Button("Hover Me"))
+		std::cout << "tits and fuck\n";
+	
+	this->game.p3d_imgui.render_imgui();
 }
 
-void Demon::setup_imgui_button(Panda3DImGui* panda3d_imgui_helper) {
-
-	auto bt = engine.button_throwers[0];
-	auto ev_handler = EventHandler::get_global_event_handler();
-
-	ButtonThrower* bt_node = DCAST(ButtonThrower, bt.node());
-	std::string ev_name;
-
-	// ----------------------------------------------
-	ev_name = bt_node->get_button_down_event();
-	if (ev_name.empty()) {
-		ev_name = "imgui-button-down";
-		bt_node->set_button_down_event(ev_name);
-	}
+void Demon::handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui) {
 	
-	ev_handler->add_hook(ev_name, [](const Event* ev, void* user_data) {
-		const auto& key_name = ev->get_parameter(0).get_string_value();
-		const auto& button = ButtonRegistry::ptr()->get_button(key_name);
-		static_cast<Panda3DImGui*>(user_data)->on_button_down_or_up(button, true);
-	}, panda3d_imgui_helper);
-
-	// ----------------------------------------------
-	ev_name = bt_node->get_button_up_event();
-	if (ev_name.empty()) {
-		ev_name = "imgui-button-up";
-		bt_node->set_button_up_event(ev_name);
-	}
+	if(!mw->has_mouse())
+		return;
 	
-	ev_handler->add_hook(ev_name, [](const Event* ev, void* user_data) {
-		const auto& key_name = ev->get_parameter(0).get_string_value();
-		const auto& button = ButtonRegistry::ptr()->get_button(key_name);
-		static_cast<Panda3DImGui*>(user_data)->on_button_down_or_up(button, false);
-	}, panda3d_imgui_helper);
-
-	// ----------------------------------------------
-	ev_name = bt_node->get_keystroke_event();
-	if (ev_name.empty()) {
-		ev_name = "imgui-keystroke";
-		bt_node->set_keystroke_event(ev_name);
+	for (const ButtonHandle& button: panda3d_imgui->btn_handles) {
+		
+		if(mw->is_button_down(button))
+			panda3d_imgui->on_button_down_or_up(button, true);
+		else
+			panda3d_imgui->on_button_down_or_up(button, false);
 	}
-	
-	ev_handler->add_hook(ev_name, [](const Event* ev, void* user_data) {
-		wchar_t keycode = ev->get_parameter(0).get_wstring_value()[0];
-		static_cast<Panda3DImGui*>(user_data)->on_keystroke(keycode);
-	}, panda3d_imgui_helper);
+}
+
+void Demon::DoImGUI() {
+	if (ImGui::Button("Click Me"))
+		std::cout << "tits and fucking\n";
 }

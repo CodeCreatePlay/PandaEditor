@@ -1,43 +1,40 @@
-#include "engine.h"
-#include "game.h"
+#include "demon.h"
 #include "levelEditor.hpp"
 
 
-LevelEditor::LevelEditor(Engine* engine, Game* game) : 
-	engine(engine),
-	game(game),
+LevelEditor::LevelEditor(Demon *demon) : 
+	demon(demon),
 	mouse_picker("SelectionMousePicker"),
 	marquee("Marquee") {}
 
 void LevelEditor::init() {
 	
-	mouse_picker.init(engine);
-	marquee.init(engine, game->render);
+	mouse_picker.init(&demon->engine);
+	marquee.init(&demon->engine, demon->game.render);
 	
-	engine->add_event_hook(1,
-		[this](const Event* evt, const std::vector<void*>& params) { this->on_event(evt, params); }
-	);
+	demon->engine.define_event( "mouse1",    [this](std::vector<void*>& params) { return this->on_mouse(params);    }, {} );
+	demon->engine.define_event( "mouse1-up", [this](std::vector<void*>& params) { return this->on_mouse_up(params); }, {} );
 }
 
 std::vector<NodePath> LevelEditor::get_selected_nps() { return selected_nps; }
 
-void LevelEditor::on_event(const Event* evt, const std::vector<void*>&) {
+void LevelEditor::on_mouse(std::vector<void*>& params) {
 	
-	if(evt->get_name() == "mouse1") {
-		mouse_picker.update();
-		marquee.on_start();
-	}
-	else if(evt->get_name() == "mouse1-up") {
-		marquee.on_stop();
-		
-		// get selected nodes
-		selected_nps = marquee.get_found_nps();
-		selected_nps.push_back(mouse_picker.get_first_np());
+	this->mouse_picker.update();
+	this->marquee.on_start();
+}
 
-		for (const auto& np : selected_nps) {
-			if(np.is_empty())
-				continue;
-			std::cout << np.get_name() << std::endl;
-		}
+void LevelEditor::on_mouse_up(std::vector<void*>& params) {
+	
+	marquee.on_stop();
+		
+	// get selected nodes
+	selected_nps = marquee.get_found_nps();
+	selected_nps.push_back(mouse_picker.get_first_np());
+
+	for (const auto& np : selected_nps) {
+		if(np.is_empty())
+			continue;
+		std::cout << np.get_name() << std::endl;
 	}
 }

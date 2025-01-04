@@ -39,6 +39,24 @@
 
 class Engine {
 public:
+	using Callable = std::function<void(std::vector<void*>&)>;
+	struct EventObj {
+		public:
+			Callable callable;
+			std::vector<void*> optional_params;
+			
+			EventObj(Callable callable) {
+				this->callable = callable;
+			}
+			
+			EventObj(Callable callable, std::vector<void*> optional_params) {
+				this->callable = callable;
+				this->optional_params = optional_params;
+			}
+	};
+	
+	using EventMap = std::unordered_map<std::string, std::vector<EventObj>>;
+
     Engine();
     ~Engine();
 
@@ -70,34 +88,38 @@ public:
     Mouse mouse;
     ResourceManager resourceManager;
     AxisGrid axisGrid;
-
+	
+	EventMap event_map;
+	
     // methods
-	void add_update_callback(void(*callback)());
-    void update();
-
-    float get_aspect_ratio();
-    LVecBase2i get_size();
+	void update();
+	void clean_up();
 	
-	void setup_mouse_keyboard(MouseWatcher*& mw);
-	
-    void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
+	void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
 	void remove_event_hook(int key);
+	void define_event(std::string evt_name, Callable callback, std::vector<void*> optional_params = {});
+	void dispatch_events(bool ignore_mouse = false);
 
-    void clean_up();
-
+	float get_aspect_ratio();
+    LVecBase2i get_size();
+	std::string get_current_event();
+	
 private:
     void create_win();
     void create_3d_render();
     void create_2d_render();
     void create_default_scene();
     void create_axis_grid();
-    void reset_clock();
-    void process_events(const Event* event);
-    void on_evt_size();
-
-    float aspect_ratio;
-    std::vector<void(*)()> update_callbacks;
+	void setup_mouse_keyboard(MouseWatcher*& mw);
+	
+	void process_events(CPT_Event event);
+	void on_evt_size();
+	void reset_clock();
+	
 	std::unordered_map<int, std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
+	
+	// cache
+	std::vector<std::pair<CPT_Event, std::vector<void*>>> panda_events;
 };
 
 #endif

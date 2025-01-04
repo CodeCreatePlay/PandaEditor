@@ -22,23 +22,26 @@
  * SOFTWARE.
 */
 
-#include "p3d_imgui.hpp"
 
 #include <cstring>
 
-#include <imgui.h>
-
 #include <throw_event.h>
-#include <nodePathCollection.h>
+#include <geomNode.h>
+#include <geomTriangles.h>
+#include <graphicsWindow.h>
+#include <mouseWatcher.h>
 #include <mouseButton.h>
 #include <colorAttrib.h>
 #include <colorBlendAttrib.h>
 #include <depthTestAttrib.h>
 #include <cullFaceAttrib.h>
 #include <scissorAttrib.h>
-#include <geomNode.h>
-#include <geomTriangles.h>
-#include <graphicsWindow.h>
+#include <nodePath.h>
+#include <nodePathCollection.h>
+
+#include "imgui.h"
+#include "p3d_imgui.hpp"
+#include "p3dmath.hpp"
 
 #if defined(__WIN32__) || defined(_WIN32)
 #include <WinUser.h>
@@ -100,17 +103,43 @@ private:
 
 // ************************************************************************************************
 
-Panda3DImGui::Panda3DImGui(GraphicsWindow* window, NodePath parent): window_(window)
-{
-    root_ = parent.attach_new_node("imgui-root", 1000);
-    context_ = ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-
-    // Setup back-end capabilities flags
-    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
-}
+Panda3DImGui::Panda3DImGui() {}
 
 Panda3DImGui::~Panda3DImGui() {}
+
+void Panda3DImGui::init(GraphicsWindow* window, MouseWatcher* mw, NodePath *parent)
+{
+	this->window_ = window;
+	this->mouse_watcher = mw;
+	root_ = parent->attach_new_node("ImGUIRoot", 1000);
+	
+	// 2. Set mouse and modifier buttons
+	// mouse buttons
+	btn_handles.push_back(MouseButton::one());
+	btn_handles.push_back(MouseButton::two());   
+	btn_handles.push_back(MouseButton::three());
+	btn_handles.push_back(MouseButton::four()); 
+	btn_handles.push_back(MouseButton::five());     
+	btn_handles.push_back(MouseButton::wheel_up());
+	btn_handles.push_back(MouseButton::wheel_down()); 
+	btn_handles.push_back(MouseButton::wheel_left());
+	btn_handles.push_back(MouseButton::wheel_right()); 
+	
+	// keyboard buttons
+	btn_handles.push_back(KeyboardButton::control());
+	btn_handles.push_back(KeyboardButton::shift());
+	btn_handles.push_back(KeyboardButton::alt());
+	btn_handles.push_back(KeyboardButton::meta());
+	
+	// 3. Init ImGUI
+	context_ = ImGui::CreateContext();
+	ImGui::SetCurrentContext(context_);
+	
+    ImGuiIO& io = ImGui::GetIO();
+
+    // setup back-end capabilities flags
+    io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+}
 
 void Panda3DImGui::setup_style(Style style)
 {
@@ -182,27 +211,27 @@ void Panda3DImGui::setup_event()
     // for button holder although the variable is not used.
     button_map_ = window_->get_keyboard_map();
 
-    io.KeyMap[ImGuiKey_Tab] = KeyboardButton::tab().get_index();
-    io.KeyMap[ImGuiKey_LeftArrow] = KeyboardButton::left().get_index();
+    io.KeyMap[ImGuiKey_Tab]        = KeyboardButton::tab().get_index();
+    io.KeyMap[ImGuiKey_LeftArrow]  = KeyboardButton::left().get_index();
     io.KeyMap[ImGuiKey_RightArrow] = KeyboardButton::right().get_index();
-    io.KeyMap[ImGuiKey_UpArrow] = KeyboardButton::up().get_index();
-    io.KeyMap[ImGuiKey_DownArrow] = KeyboardButton::down().get_index();
-    io.KeyMap[ImGuiKey_PageUp] = KeyboardButton::page_up().get_index();
-    io.KeyMap[ImGuiKey_PageDown] = KeyboardButton::page_down().get_index();
-    io.KeyMap[ImGuiKey_Home] = KeyboardButton::home().get_index();
-    io.KeyMap[ImGuiKey_End] = KeyboardButton::end().get_index();
-    io.KeyMap[ImGuiKey_Insert] = KeyboardButton::insert().get_index();
-    io.KeyMap[ImGuiKey_Delete] = KeyboardButton::del().get_index();
-    io.KeyMap[ImGuiKey_Backspace] = KeyboardButton::backspace().get_index();
-    io.KeyMap[ImGuiKey_Space] = KeyboardButton::space().get_index();
-    io.KeyMap[ImGuiKey_Enter] = KeyboardButton::enter().get_index();
-    io.KeyMap[ImGuiKey_Escape] = KeyboardButton::escape().get_index();
-    io.KeyMap[ImGuiKey_A] = KeyboardButton::ascii_key('a').get_index();
-    io.KeyMap[ImGuiKey_C] = KeyboardButton::ascii_key('c').get_index();
-    io.KeyMap[ImGuiKey_V] = KeyboardButton::ascii_key('v').get_index();
-    io.KeyMap[ImGuiKey_X] = KeyboardButton::ascii_key('x').get_index();
-    io.KeyMap[ImGuiKey_Y] = KeyboardButton::ascii_key('y').get_index();
-    io.KeyMap[ImGuiKey_Z] = KeyboardButton::ascii_key('z').get_index();
+    io.KeyMap[ImGuiKey_UpArrow]    = KeyboardButton::up().get_index();
+    io.KeyMap[ImGuiKey_DownArrow]  = KeyboardButton::down().get_index();
+    io.KeyMap[ImGuiKey_PageUp]     = KeyboardButton::page_up().get_index();
+    io.KeyMap[ImGuiKey_PageDown]   = KeyboardButton::page_down().get_index();
+    io.KeyMap[ImGuiKey_Home]       = KeyboardButton::home().get_index();
+    io.KeyMap[ImGuiKey_End]        = KeyboardButton::end().get_index();
+    io.KeyMap[ImGuiKey_Insert]     = KeyboardButton::insert().get_index();
+    io.KeyMap[ImGuiKey_Delete]     = KeyboardButton::del().get_index();
+    io.KeyMap[ImGuiKey_Backspace]  = KeyboardButton::backspace().get_index();
+    io.KeyMap[ImGuiKey_Space]      = KeyboardButton::space().get_index();
+    io.KeyMap[ImGuiKey_Enter]      = KeyboardButton::enter().get_index();
+    io.KeyMap[ImGuiKey_Escape]     = KeyboardButton::escape().get_index();
+    io.KeyMap[ImGuiKey_A]          = KeyboardButton::ascii_key('a').get_index();
+    io.KeyMap[ImGuiKey_C]          = KeyboardButton::ascii_key('c').get_index();
+    io.KeyMap[ImGuiKey_V]          = KeyboardButton::ascii_key('v').get_index();
+    io.KeyMap[ImGuiKey_X]          = KeyboardButton::ascii_key('x').get_index();
+    io.KeyMap[ImGuiKey_Y]          = KeyboardButton::ascii_key('y').get_index();
+    io.KeyMap[ImGuiKey_Z]          = KeyboardButton::ascii_key('z').get_index();
 }
 
 void Panda3DImGui::enable_file_drop()
@@ -237,8 +266,9 @@ void Panda3DImGui::on_button_down_or_up(const ButtonHandle& button, bool down)
 {
     if (button == ButtonHandle::none())
         return;
-
+	
     ImGuiIO& io = ImGui::GetIO();
+
     if (MouseButton::is_mouse_button(button))
     {
         if (button == MouseButton::one())
@@ -305,22 +335,28 @@ bool Panda3DImGui::new_frame_imgui()
     static const int MOUSE_DEVICE_INDEX = 0;
 
     ImGuiIO& io = ImGui::GetIO();
-
     io.DeltaTime = static_cast<float>(ClockObject::get_global_clock()->get_dt());
 
     if (window_.is_valid_pointer() && window_->is_of_type(GraphicsWindow::get_class_type()))
     {
-        const auto& mouse = window_->get_pointer(MOUSE_DEVICE_INDEX);
-        if (mouse.get_in_window())
+        // const auto& mouse = window_->get_pointer(MOUSE_DEVICE_INDEX);
+        if (mouse_watcher->has_mouse())
         {
+			// float x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, 800.0f);
+			// float y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, 600.0f);
+			
+			// std::cout << "mouse pos X: " << x << " mouse pos Y: " << y << std::endl;
+			// std::cout << "mouse pos X: " << mouse_watcher->get_mouse_x() << " mouse pos Y: " << mouse_watcher->get_mouse_y() << std::endl;
+			// std::cout << "mouse pos X: " << mouse.get_x() << " mouse pos Y: " << mouse.get_y() << std::endl;
+			
             if (io.WantSetMousePos)
             {
                 window_->move_pointer(MOUSE_DEVICE_INDEX, io.MousePos.x, io.MousePos.y);
             }
             else
             {
-                io.MousePos.x = static_cast<float>(mouse.get_x());
-                io.MousePos.y = static_cast<float>(mouse.get_y());
+                io.MousePos.x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, 800.0f);
+                io.MousePos.y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, 600.0f);
             }
         }
         else
@@ -331,9 +367,7 @@ bool Panda3DImGui::new_frame_imgui()
     }
 
     ImGui::NewFrame();
-
     throw_event_directly(*EventHandler::get_global_event_handler(), NEW_FRAME_EVENT_NAME);
-
     return true;
 }
 

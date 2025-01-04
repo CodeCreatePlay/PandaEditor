@@ -2,7 +2,7 @@
 #include "engine.h"
 
 
-Engine::Engine() : aspect_ratio(1.0f) {
+Engine::Engine() {
 
     data_root = NodePath("DataRoot");
 
@@ -13,6 +13,7 @@ Engine::Engine() : aspect_ratio(1.0f) {
     // Initialize Panda3D engine and create window
     create_win();
     setup_mouse_keyboard(mouse_watcher);
+
     mouse = Mouse(DCAST(GraphicsWindow, win), mouse_watcher);
     create_3d_render();
     create_2d_render();
@@ -30,15 +31,8 @@ Engine::Engine() : aspect_ratio(1.0f) {
 
 Engine::~Engine() {}
 
-void Engine::add_update_callback(void(*callback)()) {
-    // Check if the function pointer already exists in the vector
-    if (std::find(update_callbacks.begin(), update_callbacks.end(), callback) == update_callbacks.end()) {
-        // Add the function pointer if it's not already in the vector
-        update_callbacks.push_back(callback);
-    }
-}
-
 void Engine::create_win() {
+
     engine = GraphicsEngine::get_global_ptr();
     pipe = GraphicsPipeSelection::get_global_ptr()->make_default_pipe();
 
@@ -73,6 +67,7 @@ void Engine::create_3d_render() {
 }
 
 void Engine::create_2d_render() {
+
     dr2d = win->make_display_region(0, 1, 0, 1);
     dr2d->set_sort(1);
     dr2d->set_active(true);
@@ -89,8 +84,8 @@ void Engine::create_2d_render() {
     // the lowerleft corner is (xsize, -ysize), in this coordinate system.
     // NodePath());
 
-    PGTop* top_node = new PGTop("Pixel2d");
-    pixel2d = render2d.attach_new_node(top_node);
+    PGTop* pixel2D_ = new PGTop("Pixel2d");
+    pixel2d = render2d.attach_new_node(pixel2D_);
     pixel2d.set_pos(-1, 0, 1);
 
     auto mouse_watcher_node = DCAST(MouseWatcher, mouse_watcher);
@@ -115,20 +110,16 @@ void Engine::create_2d_render() {
 }
 
 void Engine::create_default_scene() {
+
     // Create default scene here
 }
 
 void Engine::create_axis_grid() {
+
     axisGrid = AxisGrid();
     axisGrid.create(100, 10, 2);
     axisGrid.set_light_off();
     axisGrid.reparent_to(render);
-}
-
-void Engine::reset_clock() {
-    ClockObject::get_global_clock()->set_real_time(TrueClock::get_global_ptr()->get_short_time());
-	ClockObject::get_global_clock()->tick();
-    AsyncTaskManager::get_global_ptr()->set_clock(ClockObject::get_global_clock());
 }
 
 void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
@@ -138,14 +129,14 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
         return;
 
     GraphicsWindow *window = DCAST(GraphicsWindow, win);
-
-    MouseAndKeyboard* mouse_and_keyboard = new MouseAndKeyboard(window, 0, "MouseAndKeyboard_01");
-	MouseWatcher*     mouse_watcher  = new MouseWatcher("MouseWatcher_01");
-	ButtonThrower*    button_thrower = new ButtonThrower("Button_Thrower_01");
-	// button_thrower->add_parameter(EventParameter(this));
 	
+	int decive_idx = data_root.get_num_children();
 	
-    NodePath mk_node = data_root.attach_new_node(mouse_and_keyboard);
+    MouseAndKeyboard* mouse_and_keyboard = new MouseAndKeyboard(window, decive_idx, win->get_input_device_name(decive_idx));
+	MouseWatcher*     mouse_watcher      = new MouseWatcher("MouseWatcher");
+	ButtonThrower*    button_thrower     = new ButtonThrower("Button_Thrower");
+		
+    NodePath mk_node           = data_root.attach_new_node(mouse_and_keyboard);
     NodePath mouse_watcher_np  = mk_node.attach_new_node(mouse_watcher);
 	NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
 	// DCAST(ButtonThrower, button_thrower_np.node())->set_prefix("");
@@ -170,8 +161,122 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
 
     mouse_watchers.push_back(mouse_watcher_np);
 	button_throwers.push_back(button_thrower_np);
-	
+
 	mw = mouse_watcher;
+}
+
+void Engine::process_events(CPT_Event event) {
+		
+    if (!event->get_name().empty()) {
+
+        if (event->get_name() == "window-event") {
+            on_evt_size();
+        }
+
+        std::vector<void*> param_list;
+        for (int i = 0; i < event->get_num_parameters(); ++i) {
+
+            const EventParameter& event_parameter = event->get_parameter(i);
+
+            if (event_parameter.is_int()) {
+                param_list.push_back(new int(event_parameter.get_int_value()));
+            }
+            else if (event_parameter.is_double()) {
+                param_list.push_back(new double(event_parameter.get_double_value()));
+            }
+            else if (event_parameter.is_string()) {
+                param_list.push_back(new std::string(event_parameter.get_string_value()));
+            }
+            else if (event_parameter.is_wstring()) {
+                param_list.push_back(new std::wstring(event_parameter.get_wstring_value()));
+            }
+            else if (event_parameter.is_typed_ref_count()) {
+                param_list.push_back(event_parameter.get_typed_ref_count_value());
+            }
+            else {
+                param_list.push_back(event_parameter.get_ptr());
+            }
+        }
+
+        if (event_handler) {
+            event_handler->dispatch_event(event);
+        }
+		
+		panda_events.emplace_back(event, param_list);
+    }
+}
+
+void Engine::update() {
+
+    // traverse the data graph.This reads all the control
+    // inputs(from the mouse and keyboard, for instance) and also
+    // directly acts upon them(for instance, to move the avatar).
+    data_graph_trav.traverse(data_root.node());
+
+    // process events
+    while (!event_queue->is_queue_empty()) {
+        process_events(event_queue->dequeue_event());
+    }
+
+    // update mouse and camera
+    mouse.update();
+    scene_cam.update();
+}
+
+void Engine::on_evt_size() {
+
+    float aspect_ratio = get_aspect_ratio();  // update
+
+    if (aspect_ratio == 0)
+        return;
+
+    aspect2d.set_scale(1.0f / aspect_ratio, 1.0f, 1.0f);
+    if(scene_cam)
+        scene_cam.on_resize_event(aspect_ratio);
+
+    LVecBase2i size = get_size();
+    if (size.get_x() > 0 && size.get_y() > 0) {
+        pixel2d.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
+	}
+}
+
+void Engine::reset_clock() {
+
+    ClockObject::get_global_clock()->set_real_time(TrueClock::get_global_ptr()->get_short_time());
+	ClockObject::get_global_clock()->tick();
+    AsyncTaskManager::get_global_ptr()->set_clock(ClockObject::get_global_clock());
+}
+
+void Engine::clean_up() {
+
+	// 1. Remove all tasks
+    // Retrieve all tasks currently managed
+    AsyncTaskCollection all_tasks = AsyncTaskManager::get_global_ptr()->get_tasks();
+
+    // Remove each task
+    for (size_t i = 0; i < all_tasks.get_num_tasks(); ++i) {
+        PT(AsyncTask) task = all_tasks.get_task(i);
+        AsyncTaskManager::get_global_ptr()->remove(task);
+    }
+	
+	// 2. Empty event queue and remove event hooks
+	event_queue->clear();
+	EventHandler::get_global_event_handler()->remove_all_hooks();
+	
+	// 3. Remove render and render 2D
+	render.remove_node();
+	render2d.remove_node();
+	
+	// 4. Destroy loader
+	Loader::get_global_ptr()->stop_threads();
+
+	// 5. Clear render textures
+	GraphicsOutput *output = DCAST(GraphicsOutput, win);
+	output->clear_render_textures();
+	
+	// 6. Remove all windows
+    win->set_active(false);
+    // engine->remove_all_windows();
 }
 
 void Engine::add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
@@ -211,131 +316,51 @@ void Engine::remove_event_hook(int key) {
     }
 }
 
-void Engine::process_events(const Event *event) {
-    if (!event->get_name().empty()) {
+void Engine::define_event(std::string evt_name, Engine::Callable callback, std::vector<void*> optional_params) {
+	Engine::event_map[evt_name].push_back(Engine::EventObj(callback, optional_params));
+}
 
-        if (event->get_name() == "window-event") {
-            on_evt_size();
-        }
+void Engine::dispatch_events(bool ignore_mouse) {
 
-        std::vector<void*> param_list;
-        for (int i = 0; i < event->get_num_parameters(); ++i) {
-
-            const EventParameter& event_parameter = event->get_parameter(i);
-
-            if (event_parameter.is_int()) {
-                param_list.push_back(new int(event_parameter.get_int_value()));
-            }
-            else if (event_parameter.is_double()) {
-                param_list.push_back(new double(event_parameter.get_double_value()));
-            }
-            else if (event_parameter.is_string()) {
-                param_list.push_back(new std::string(event_parameter.get_string_value()));
-            }
-            else if (event_parameter.is_wstring()) {
-                param_list.push_back(new std::wstring(event_parameter.get_wstring_value()));
-            }
-            else if (event_parameter.is_typed_ref_count()) {
-                param_list.push_back(event_parameter.get_typed_ref_count_value());
-            }
-            else {
-                param_list.push_back(event_parameter.get_ptr());
-            }
-        }
+	const Event* event;
+	for (auto it = panda_events.begin(); it != panda_events.end(); ++it) {
 		
+		event = it->first.p();
+
+		// send raw event hooks
 		for(const auto& pair : evt_hooks) {
-			pair.second(event, param_list);
+			pair.second(event, it->second);
 		}
-
-        if (event_handler) {
-            event_handler->dispatch_event(event);
-        }
-    }
-}
-
-void Engine::on_evt_size() {
-    get_aspect_ratio();  // update
-
-    if (aspect_ratio == 0)
-        return;
-
-    aspect2d.set_scale(1.0f / aspect_ratio, 1.0f, 1.0f);
-    if(scene_cam)
-        scene_cam.on_resize_event(aspect_ratio);
-
-    LVecBase2i size = get_size();
-    if (size.get_x() > 0 && size.get_y() > 0) {
-        pixel2d.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
+		
+		// other
+		if(ignore_mouse && event->get_name().substr(0, 5) == "mouse")
+			continue;
+		
+		if (event_map.find(event->get_name()) != event_map.end()) {
+			for (auto event_it = event_map[event->get_name()].begin(); event_it != event_map[event->get_name()].end(); ++event_it) {
+				event_it->callable(event_it->optional_params);
+			}
+		}
 	}
-}
-
-void Engine::update() { 
-    // traverse the data graph.This reads all the control
-    // inputs(from the mouse and keyboard, for instance) and also
-    // directly acts upon them(for instance, to move the avatar).
-    data_graph_trav.traverse(data_root.node());
-
-    // process events
-    while (!event_queue->is_queue_empty()) {
-        process_events(event_queue->dequeue_event());
-    }
-
-    // update mouse and camera
-    mouse.update();
-    scene_cam.update();
-
-    // update callbacks
-    for (const auto& callback : update_callbacks)
-        callback();
+	
+	panda_events.clear();
 }
 
 float Engine::get_aspect_ratio() {
-    aspect_ratio = static_cast<float>(win->get_sbs_left_x_size()) / static_cast<float>(win->get_sbs_left_y_size());
-    return aspect_ratio;
+
+    return static_cast<float>(win->get_sbs_left_x_size()) / static_cast<float>(win->get_sbs_left_y_size());
 }
 
 LVecBase2i Engine::get_size() {
+
     if (win != nullptr) {
 
         if (DCAST(GraphicsWindow, win) && win->has_size()) {
-            // GraphicsWindow* gwin = DCAST(GraphicsWindow, win);
-            // LVecBase2i size = gwin->get_size();
+			// std::cout << "x size: " << win->get_sbs_left_x_size() << " y size: " << win->get_sbs_left_y_size() << std::endl;
 			return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
         }
     }
 
     // WindowProperties props = WindowProperties::get_default();
     return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
-}
-
-void Engine::clean_up() {
-
-	// 1. Remove all tasks
-    // Retrieve all tasks currently managed
-    AsyncTaskCollection all_tasks = AsyncTaskManager::get_global_ptr()->get_tasks();
-
-    // Remove each task
-    for (size_t i = 0; i < all_tasks.get_num_tasks(); ++i) {
-        PT(AsyncTask) task = all_tasks.get_task(i);
-        AsyncTaskManager::get_global_ptr()->remove(task);
-    }
-	
-	// 2. Empty event queue and remove event hooks
-	event_queue->clear();
-	EventHandler::get_global_event_handler()->remove_all_hooks();
-	
-	// 3. Remove render and render 2D
-	render.remove_node();
-	render2d.remove_node();
-	
-	// 4. Destroy loader
-	Loader::get_global_ptr()->stop_threads();
-
-	// 5. Clear render textures
-	GraphicsOutput *output = DCAST(GraphicsOutput, win);
-	output->clear_render_textures();
-	
-	// 6. Remove all windows
-    win->set_active(false);
-    // engine->remove_all_windows();
 }

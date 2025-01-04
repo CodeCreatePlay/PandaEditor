@@ -9,6 +9,7 @@
 #include <geomTriangles.h>
 
 #include "taskUtils.hpp"
+#include "constants.hpp"
 
 
 class Marquee {
@@ -53,7 +54,7 @@ public:
                 update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
                     return on_update();
                 }, _name + "-" + "MarqueeTask"));
-                update_task->set_sort(1);
+                update_task->set_sort(MARQUEE_TASK_SORT);
 				
                 AsyncTaskManager::get_global_ptr()->add(update_task);
             }

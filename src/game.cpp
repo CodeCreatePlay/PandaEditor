@@ -7,14 +7,16 @@
 #include <mouseWatcher.h>
 #include <perspectiveLens.h>
 #include <orthographicLens.h>
+#include <keyboardButton.h>
 #include <nodePath.h>
 
-#include "engine.h"
+// #include "engine.h"
 #include "game.h"
+#include "demon.h"
 
 
 // Constructor
-Game::Game(Engine* engine) : engine(engine), dr3D(nullptr), dr2D(nullptr) { }
+Game::Game(Demon* demon) : demon(demon), dr3D(nullptr), dr2D(nullptr) { }
 
 // Initialize the game
 void Game::init() {
@@ -25,7 +27,7 @@ void Game::init() {
 
     // 3D render
     render = NodePath("GameRender");
-	render.reparent_to(engine->render);
+	//render.reparent_to(engine->render);
 
 	// 2D render
     render2D = NodePath("GameRender2D");
@@ -33,7 +35,12 @@ void Game::init() {
     render2D.set_depth_write(false);
     render2D.set_material_off(true);
     render2D.set_two_sided(true);
-	render2D.reparent_to(engine->render2d);
+	//render2D.reparent_to(engine->render2d);
+	
+	// pixel 2D
+	PGTop* pixel2D_ = new PGTop("Pixel2d");
+    pixel2D = render2D.attach_new_node(pixel2D_);
+    pixel2D.set_pos(-1, 0, 1);
 	
 	// 3D camera
 	main_cam = NodePath(new Camera("Camera2D"));
@@ -58,8 +65,22 @@ void Game::init() {
 	dr2D->set_camera(cam2D);
 	
     // Set up mouse watcher
-	engine->setup_mouse_keyboard(mouse_watcher);
-    mouse_watcher->set_display_region(dr3D);
+	mouse_watcher = new MouseWatcher("GameMouse");
+	NodePath mouse_watcher_ = demon->engine.mouse_watchers[0].get_parent().attach_new_node(mouse_watcher);
+	
+	//button_thrower = new ButtonThrower("Button_Thrower_01-game");
+	//mouse_watcher_.attach_new_node(button_thrower);
+	
+    mouse_watcher->set_display_region(dr2D);
+	DCAST(PGTop, pixel2D.node())->set_mouse_watcher(mouse_watcher);
+	
+	LVecBase2i size = demon->engine.get_size();
+    if (size.get_x() > 0 && size.get_y() > 0) {
+		pixel2D.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
+	}
+	
+	// event hooks
+	
 
     std::cout << "-- Game init successfully" << std::endl;
 	
@@ -75,12 +96,13 @@ void Game::init() {
 	*/
 }
 
-void Game::update_task() {}
+void Game::update() {
+}
 
 // Create a 3D display region
 void Game::create_dr3D() {
 	
-    dr3D = engine->win->make_display_region(0, 0.4, 0, 0.35);
+    dr3D = demon->engine.win->make_display_region(0, 0.4, 0.6, 1);
     dr3D->set_sort(-1);
     dr3D->set_clear_color_active(true);
     dr3D->set_clear_depth_active(true);
@@ -90,7 +112,7 @@ void Game::create_dr3D() {
 // Create a 2D display region
 void Game::create_dr2D() {
 
-    dr2D = engine->win->make_display_region(0, 0.4, 0, 0.35);
+    dr2D = demon->engine.win->make_display_region(0, 0.4, 0.6, 1);
     dr2D->set_clear_depth_active(false);
     dr2D->set_sort(10);
     dr2D->set_active(true);

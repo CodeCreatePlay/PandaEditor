@@ -1,37 +1,47 @@
 #ifndef DEMON_H
 #define DEMON_H
 
+#include <unordered_map>
+#include <vector>
+
 #include "engine.h"
 #include "game.h"
 #include "levelEditor.hpp"
 #include "p3d_Imgui.hpp"
-#include "imgui.h"
+#include "constants.hpp"
 
 
 class Demon {
 public:
     Demon();
     ~Demon();
-		
+	
 	void start();
 	void setup_paths();
 	void enable_game_mode();
 	void exit_game_mode();
-	void on_evt(const Event* evt, const std::vector<void*>&);
+	void update_game_view(GameViewStyle style);
 	void exit();
 	
 	Engine engine;
 	Game game;
 	LevelEditor le;
 	
-	bool cleaned_up;
+	void DoImGUI();
 	
+private:
+	bool cleaned_up;
+	bool is_game_mode;
+	bool handleWinEvent;
+	bool mouse_over_ui = false;
+	
+	// ---------------------------------------------------------------------------------------------
 	// imgui
     Panda3DImGui p3d_imgui;
-	void setup_imgui();
-	void setup_imgui_render(Panda3DImGui* panda3d_imgui_helper);
-	void setup_imgui_button(Panda3DImGui* panda3d_imgui_helper);
-	static void on_imgui_new_frame();
+	void init_imgui(Panda3DImGui *panda3d_imgui, NodePath *parent, MouseWatcher* mw, std::string name);
+	void init_imgui_task();
+	void imgui_update();
+	void handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui);
 };
 
 #endif

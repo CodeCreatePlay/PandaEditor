@@ -20,26 +20,26 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
+*/
 
 #pragma once
 
-#include <nodePath.h>
 
-
-class Texture;
-class ButtonMap;
 class GraphicsWindow;
 class ButtonHandle;
+class MouseWatcher;
+class ButtonMap;
+class Texture;
+class NodePath;
 
 struct ImGuiContext;
 
 class Panda3DImGui
 {
 public:
-    static constexpr const char* NEW_FRAME_EVENT_NAME = "imgui-new-frame";
+    static constexpr const char* NEW_FRAME_EVENT_NAME     = "imgui-new-frame";
     static constexpr const char* SETUP_CONTEXT_EVENT_NAME = "imgui-setup-context";
-    static constexpr const char* DROPFILES_EVENT_NAME = "imgui-dropfiles";
+    static constexpr const char* DROPFILES_EVENT_NAME     = "imgui-dropfiles";
 
     enum class Style
     {
@@ -49,9 +49,10 @@ public:
     };
 
 public:
-    Panda3DImGui(GraphicsWindow* window, NodePath parent);
+    Panda3DImGui();
     ~Panda3DImGui();
-
+	
+	void init(GraphicsWindow* window, MouseWatcher* mw, NodePath *parent);
     void setup_style(Style style = Style::dark);
     void setup_geom();
     void setup_shader(const Filename& shader_dir_path);
@@ -80,12 +81,14 @@ public:
 	
 	/** clean up */
 	void clean_up();
+	
+	ImGuiContext* context_ = nullptr;
+    MouseWatcher* mouse_watcher = nullptr;
+	std::vector<ButtonHandle> btn_handles;
 
 private:
     void setup_font_texture();
     NodePath create_geomnode(const GeomVertexData* vdata);
-
-    ImGuiContext* context_ = nullptr;
 
     WPT(GraphicsWindow) window_;
 	CPT(GeomVertexFormat) vformat_;

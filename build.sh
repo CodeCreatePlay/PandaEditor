@@ -93,8 +93,7 @@ print_project_tree() {
 
     echo -e "PandaEditor Project Configuration and Build System\n"
     echo "src"
-
-
+	
 	local total_projects_count=0
 	
     # Loop through specific directories (game, demos, builds) inside src
@@ -167,7 +166,7 @@ function get_project {
 
     while true; do
         # Prompt the user for the project name
-        read -p "Enter project name, index or -1 to exit: " project_name
+        read -p "Enter project name / index or -1 to exit: " project_name
 
 		# Validate input
 		if [[ -z "$project_name" ]]; then
