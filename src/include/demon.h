@@ -27,8 +27,6 @@ public:
 	Game game;
 	LevelEditor le;
 	
-	void DoImGUI();
-	
 private:
 	bool cleaned_up;
 	bool is_game_mode;
