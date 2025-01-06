@@ -2,6 +2,7 @@
 #include <genericAsyncTask.h>
 #include <config_putil.h>
 #include <nodePath.h>
+#include <bitMask.h>
 
 #include "pathUtils.h"
 #include "taskUtils.hpp"

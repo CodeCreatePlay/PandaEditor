@@ -27,7 +27,7 @@ void Game::init() {
 
     // 3D render
     render = NodePath("GameRender");
-	//render.reparent_to(engine->render);
+	render.reparent_to(demon->engine.render);
 
 	// 2D render
     render2D = NodePath("GameRender2D");
@@ -35,7 +35,7 @@ void Game::init() {
     render2D.set_depth_write(false);
     render2D.set_material_off(true);
     render2D.set_two_sided(true);
-	//render2D.reparent_to(engine->render2d);
+	render2D.reparent_to(demon->engine.render2d);
 	
 	// pixel 2D
 	PGTop* pixel2D_ = new PGTop("Pixel2d");
@@ -79,21 +79,17 @@ void Game::init() {
 		pixel2D.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
 	}
 	
-	// event hooks
-	
-
     std::cout << "-- Game init successfully" << std::endl;
 	
-	/*
-	// test scene
-	NodePath enviro = engine->resourceManager.load_model("models/environment");
-	enviro.reparent_to(render);
-	// main_cam.set_pos(0, 15, -50);
 	
-	NodePath smiley = engine->resourceManager.load_model("models/smiley");
-	smiley.reparent_to(render);
-	smiley.set_pos(0, 30, 30
-	*/
+	// test scene
+	//NodePath enviro = demon->engine.resourceManager.load_model("models/environment");
+	//enviro.reparent_to(render);
+	//main_cam.set_pos(0, -155, 0);
+	
+	//NodePath smiley = demon->engine.resourceManager.load_model("models/smiley");
+	//smiley.reparent_to(render);
+	//smiley.set_pos(0, 30, 30);
 }
 
 void Game::update() {
