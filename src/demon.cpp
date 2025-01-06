@@ -9,14 +9,6 @@
 #include "imgui.h"
 
 
-void on_fuck(std::vector<void*> params) {
-	std::cout << "Michelle's boobs\n";
-}
-
-void on_fuck_ass(std::vector<void*> params) {
-	std::cout << "Michelle's ass\n";
-}
-
 Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	
 	// 1. Initialize
@@ -170,9 +162,11 @@ void Demon::init_imgui(Panda3DImGui *panda3d_imgui, NodePath *parent, MouseWatch
     panda3d_imgui->setup_font();
     panda3d_imgui->setup_event();
     panda3d_imgui->enable_file_drop();
-	
+
+	/*	
 	if (name == "Editor")
 		engine.define_event("editor_imgui", [this](std::vector<void*>& params){ return this->DoImGUI(); }, {});
+	*/
 	// game imgui is defined by user
 }
 
@@ -205,10 +199,7 @@ void Demon::imgui_update() {
 		event_it->callable(event_it->optional_params);
 	
 	if(ImGui::IsWindowHovered()) { mouse_over_ui = true; }
-	
-	if (ImGui::Button("Hover Me"))
-		std::cout << "tits and fuck\n";
-	
+		
 	this->game.p3d_imgui.render_imgui();
 }
 
@@ -224,9 +215,4 @@ void Demon::handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui) {
 		else
 			panda3d_imgui->on_button_down_or_up(button, false);
 	}
-}
-
-void Demon::DoImGUI() {
-	if (ImGui::Button("Click Me"))
-		std::cout << "tits and fucking\n";
 }
