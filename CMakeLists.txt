@@ -19,6 +19,11 @@ else()
     endif()
 endif()
 
+# 
+set(CMAKE_CXX_STANDARD 14)        	 # Use C++14
+set(CMAKE_CXX_STANDARD_REQUIRED ON)  # Ensure the standard is supported
+set(CMAKE_CXX_EXTENSIONS OFF)        # Disable compiler-specific extensions
+
 # ---------------- PANDA_EDITOR-SETUP ---------------- #
 # Directory Paths
 set(THIRDPARTY_DIR_SRC ${CMAKE_SOURCE_DIR}/src/thirdparty)
