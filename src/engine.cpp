@@ -225,8 +225,7 @@ void Engine::update() {
 
 void Engine::on_evt_size() {
 
-    float aspect_ratio = get_aspect_ratio();  // update
-
+    float aspect_ratio = get_aspect_ratio();
     if (aspect_ratio == 0)
         return;
 

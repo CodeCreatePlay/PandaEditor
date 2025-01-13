@@ -14,11 +14,12 @@ class Game {
 public:
     explicit Game(Demon* demon);
     void init();
-    void update();
+    void on_evt(const Event* evt, const std::vector<void*>& params);
 	
 	//ButtonThrower* button_thrower;
 	NodePath render;
     NodePath render2D;
+	NodePath aspect2D;
 	NodePath pixel2D;
 	
 	NodePath main_cam;

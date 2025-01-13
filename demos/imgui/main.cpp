@@ -1,9 +1,10 @@
 #include <eventHandler.h>
 #include "demon.h"
+#include "imgui.h"
 
 
 void on_imgui_new_frame() {
-	
+
     static bool show_demo_window = true;
     static bool show_another_window = false;
     static LVecBase3f clear_color = LVecBase3f(0);
@@ -46,17 +47,21 @@ void on_imgui_new_frame() {
     }
 }
 
+void on_game_new_frame() {
+		
+	if (ImGui::Button("Game UI Button"))
+		std::cout << "Game UI Button Clicked\n";
+}
+
 int main(int argc, char* argv[]) {
-    // Create an instance of the Demon class
+	
     Demon demon;
-
-    // your code goes here...
-	EventHandler::get_global_event_handler()->add_hook
-	("imgui-new-frame", [](const Event*) { on_imgui_new_frame(); });
-
-    // Initialize and start the PandaEditor
+	
+	demon.engine.define_event("editor_imgui", [](std::vector<void*>& params){ on_imgui_new_frame(); }, {});
+	demon.engine.define_event("game_imgui",   [](std::vector<void*>& params){ on_game_new_frame();  }, {});
+	
     demon.start();
-
+		
     // Exit the program
     return 0;  
 }

@@ -85,6 +85,9 @@ public:
 	ImGuiContext* context_ = nullptr;
     MouseWatcher* mouse_watcher = nullptr;
 	std::vector<ButtonHandle> btn_handles;
+	
+	int last_resolution_x;
+	int last_resolution_y;
 
 private:
     void setup_font_texture();

@@ -181,7 +181,7 @@ function get_project {
 		elif [[ "$project_name" =~ [^a-zA-Z0-9_-] ]]; then
 			echo -e "Invalid project name: Only letters, numbers, hyphens (-), and underscores (_) are allowed. Please try again.\n"
 			continue
-		elif [ "$project_name" == "assets" ]; then
+		elif [[ "$project_name" == "assets" || "$project_name" == "example_code" ]]; then
 			# 'assets' is a reserved folder
 			echo -e "Invalid project name, try again.\n"
 			continue

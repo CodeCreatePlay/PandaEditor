@@ -9,6 +9,8 @@ enum GameViewStyle {
     TOP_RIGHT,
 };
 
+constexpr int GAME_RAW_EVT_IDX   = 0;
+
 constexpr int MAIN_TASK_SORT     = 0;
 constexpr int MARQUEE_TASK_SORT  = 1;
 

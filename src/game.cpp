@@ -10,7 +10,6 @@
 #include <keyboardButton.h>
 #include <nodePath.h>
 
-// #include "engine.h"
 #include "game.h"
 #include "demon.h"
 
@@ -37,13 +36,16 @@ void Game::init() {
     render2D.set_two_sided(true);
 	render2D.reparent_to(demon->engine.render2d);
 	
+	// aspect 2D
+	aspect2D = render2D.attach_new_node("GameAspect2d");
+	
 	// pixel 2D
-	PGTop* pixel2D_ = new PGTop("Pixel2d");
+	PGTop* pixel2D_ = new PGTop("GamePixel2d");
     pixel2D = render2D.attach_new_node(pixel2D_);
     pixel2D.set_pos(-1, 0, 1);
 	
 	// 3D camera
-	main_cam = NodePath(new Camera("Camera2D"));
+	main_cam = NodePath(new Camera("GameCamera2D"));
     main_cam.reparent_to(render);
 
     PerspectiveLens *perspective_lens = new PerspectiveLens();
@@ -81,7 +83,12 @@ void Game::init() {
 	
     std::cout << "-- Game init successfully" << std::endl;
 	
-	
+	// on any event
+	demon->engine.add_event_hook(GAME_RAW_EVT_IDX,
+		[this](const Event* evt, const std::vector<void*>& params)
+		{ this->on_evt(evt, params); }
+	);
+
 	// test scene
 	//NodePath enviro = demon->engine.resourceManager.load_model("models/environment");
 	//enviro.reparent_to(render);
@@ -92,7 +99,24 @@ void Game::init() {
 	//smiley.set_pos(0, 30, 30);
 }
 
-void Game::update() {
+
+
+void Game::on_evt(const Event* evt, const std::vector<void*>& params) {
+
+	if (evt->get_name() == "window-event") {
+		
+		LVecBase2i size = demon->engine.get_size();
+		
+		if (size.get_x() > 0 && size.get_y() > 0) {
+			pixel2D.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
+		}
+		
+		float aspect_ratio = demon->engine.get_aspect_ratio();
+		if (aspect_ratio == 0)
+			return;
+
+		aspect2D.set_scale(1.0f / aspect_ratio, 1.0f, 1.0f);
+	}
 }
 
 // Create a 3D display region

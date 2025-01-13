@@ -131,6 +131,7 @@ private:
 		});
 
 		// Step 5: If there are any entries, check if the first entry's into node is "terrain"
+		// std::cout << entries[0]->get_into_node()->get_name() << std::endl;
 		if (!entries.empty() && entries[0]->get_into_node()->get_name() == "Collision") {
 			// Set ralph's Z-coordinate to the Z of the collision point
 			LPoint3 surfacePoint = entries[0]->get_surface_point(demon->engine.render);
@@ -141,15 +142,14 @@ private:
 			ralph.set_pos(start_pos);
 			// std::cout << ralph.get_pos() << std::endl;
 		}
-		
-		// std::cout << key_map["left"] << std::endl;
-		// return AsyncTask::DS_cont;  // Return AsyncTask::DS_cont to keep the task running
 	}
 	
 	void load_world() {
-		// environment = demon->engine.resourceManager.load_model("roaming-ralph/models/world.egg.pz");
-		environment = demon->engine.resourceManager.load_model(ASSETS_PATH + "/Level.egg");
-		environment.reparent_to(demon->engine.render);
+		environment = demon->engine.resourceManager.load_model(ASSETS_PATH + "/LevelTemp.egg");
+		demon->game.render.attach_new_node(environment.node());
+		// demon->engine.render.attach_new_node(environment.node());
+		
+		environment.reparent_to(demon->game.render);
 		environment.set_pos(LPoint3(0.0f, 0.0f, 0.0f));
 		environment.ls();
 		
@@ -163,7 +163,7 @@ private:
 		ralph = demon->engine.resourceManager.load_model(ASSETS_PATH + "/ralph.egg.pz");
 		ralph.reparent_to(demon->engine.render);
 		start_pos = environment.find("**/start_point").get_pos();
-		ralph.set_pos(start_pos + LPoint3(0.0f, 0.0f, 3.0f));
+		ralph.set_pos(start_pos);
 		
 		NodePath walk_anim = demon->engine.resourceManager.load_model(ASSETS_PATH + "/ralph-run.egg.pz");
 		AnimUtils::bind_anims(ralph, walk_anim, animator);  // Bind the animation to the character

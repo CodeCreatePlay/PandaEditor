@@ -40,6 +40,7 @@
 #include <nodePathCollection.h>
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "p3d_imgui.hpp"
 #include "p3dmath.hpp"
 
@@ -139,6 +140,10 @@ void Panda3DImGui::init(GraphicsWindow* window, MouseWatcher* mw, NodePath *pare
 
     // setup back-end capabilities flags
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
+	
+	// 
+	last_resolution_x = 800;
+	last_resolution_y = 600;
 }
 
 void Panda3DImGui::setup_style(Style style)
@@ -258,8 +263,53 @@ void Panda3DImGui::on_window_resized(const LVecBase2& size)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(size[0], size[1]);
-    // io.DisplayFramebufferScale;
-    // std::cout << "imgui resized";
+		
+	float scale_factor_x = static_cast<float>(size[0]) / last_resolution_x;
+    float scale_factor_y = static_cast<float>(size[1]) / last_resolution_y;
+
+    // Update window positions and sizes with independent scaling
+    for (int window_n = 0; window_n < context_->Windows.Size; window_n++) {
+        ImGuiWindow* window = context_->Windows[window_n];
+        if (window) {
+            ImGui::SetWindowPos(window, ImVec2(window->Pos.x * scale_factor_x, window->Pos.y * scale_factor_y));
+            ImGui::SetWindowSize(window, ImVec2(window->Size.x * scale_factor_x, window->Size.y * scale_factor_y));
+        }
+    }
+
+	// ------------------------------------------------------------------------------
+    // Optional: Update font scaling uniformly or independently
+    float font_scale_factor = (scale_factor_x + scale_factor_y) / 2.0f; // Average
+    ImGui::GetIO().FontGlobalScale = font_scale_factor;
+
+    // Rebuild font atlas
+    ImFontAtlas* font_atlas = io.Fonts;
+    font_atlas->Clear();
+    setup_font();
+	// ------------------------------------------------------------------------------
+
+    // Save the new resolution as the last resolution for future reference
+    last_resolution_x = size[0];
+    last_resolution_y = size[1];
+	
+	/*
+	// Reposition windows to stay within bounds
+    for (auto &w : context_->Windows) {
+        const auto size = w->Size;
+        auto pos = w->Pos;
+
+        const auto diff_bottom = (pos.y + size.y) - io.DisplaySize.y;
+        const auto diff_right = (pos.x + size.x) - io.DisplaySize.x;
+
+        if (diff_right > 0.f) pos.x -= diff_right;
+        if (pos.x < 0.f) pos.x = 0.f;
+        if (diff_bottom > 0.f) pos.y -= diff_bottom;
+        if (pos.y < 0.f) pos.y = 0.f;
+
+        if (diff_right > 0.f || pos.x < 0.f || diff_bottom > 0.f || pos.y < 0.f) {
+            ImGui::SetWindowPos(w, pos);
+        }
+    }
+	*/
 }
 
 void Panda3DImGui::on_button_down_or_up(const ButtonHandle& button, bool down)
@@ -268,12 +318,12 @@ void Panda3DImGui::on_button_down_or_up(const ButtonHandle& button, bool down)
         return;
 	
     ImGuiIO& io = ImGui::GetIO();
-
+		
     if (MouseButton::is_mouse_button(button))
     {
         if (button == MouseButton::one())
         {
-            io.MouseDown[0] = down;
+			io.MouseDown[0] = down;
         }
         else if (button == MouseButton::three())
         {
@@ -342,12 +392,13 @@ bool Panda3DImGui::new_frame_imgui()
         // const auto& mouse = window_->get_pointer(MOUSE_DEVICE_INDEX);
         if (mouse_watcher->has_mouse())
         {
-			// float x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, 800.0f);
-			// float y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, 600.0f);
+			// float x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, static_cast<float>(window_->get_x_size()));
+			// float y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, static_cast<float>(window_->get_x_size()));
 			
 			// std::cout << "mouse pos X: " << x << " mouse pos Y: " << y << std::endl;
 			// std::cout << "mouse pos X: " << mouse_watcher->get_mouse_x() << " mouse pos Y: " << mouse_watcher->get_mouse_y() << std::endl;
 			// std::cout << "mouse pos X: " << mouse.get_x() << " mouse pos Y: " << mouse.get_y() << std::endl;
+			// std::cout << static_cast<float>(mouse_watcher->get_display_region()->get_pixel_width()) << std::endl;
 			
             if (io.WantSetMousePos)
             {
@@ -355,8 +406,8 @@ bool Panda3DImGui::new_frame_imgui()
             }
             else
             {
-                io.MousePos.x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, 800.0f);
-                io.MousePos.y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, 600.0f);
+                io.MousePos.x = convert_to_range(mouse_watcher->get_mouse_x(), -1.0f, 1.0f, 0.0f, static_cast<float>(window_->get_x_size()));
+                io.MousePos.y = convert_to_range(mouse_watcher->get_mouse_y(), 1.0f, -1.0f, 0.0f, static_cast<float>(window_->get_y_size()));
             }
         }
         else
@@ -379,9 +430,11 @@ bool Panda3DImGui::render_imgui()
     ImGui::Render();
 
     ImGuiIO& io = ImGui::GetIO();
-    const float fb_width = io.DisplaySize.x * io.DisplayFramebufferScale.x;
+    const float fb_width =  io.DisplaySize.x * io.DisplayFramebufferScale.x;
     const float fb_height = io.DisplaySize.y * io.DisplayFramebufferScale.y;
-
+	
+	// std::cout << "DisplaySize: " << io.DisplayFramebufferScale.x << "  FrameSize: " << io.DisplayFramebufferScale.y << std::endl;
+	
     auto draw_data = ImGui::GetDrawData();
     //draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -452,6 +505,40 @@ bool Panda3DImGui::render_imgui()
     return true;
 }
 
+
+void Panda3DImGui::setup_font_texture()
+{
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Retrieve font texture data from ImGui
+    unsigned char* pixels;
+    int width, height;
+    io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+
+    // Create a new texture for the font
+    font_texture_ = Texture::make_texture();
+    font_texture_->set_name("imgui-font-texture");
+
+    // Set up a 2D texture with single-channel format for the alpha-only texture
+    font_texture_->setup_2d_texture(
+        width, height,
+        Texture::ComponentType::T_unsigned_byte,
+        Texture::Format::F_red // Single-channel texture
+    );
+
+    // Use nearest filtering for sharp fonts
+    font_texture_->set_minfilter(SamplerState::FilterType::FT_nearest);
+    font_texture_->set_magfilter(SamplerState::FilterType::FT_nearest);
+
+    // Copy the font data into the texture's RAM image
+    PTA_uchar ram_image = font_texture_->make_ram_image();
+    std::memcpy(ram_image.p(), pixels, width * height * sizeof(unsigned char));
+
+    // Assign the texture ID to ImGui for rendering
+    io.Fonts->TexID = font_texture_.p();
+}
+
+/*
 void Panda3DImGui::setup_font_texture()
 {
     ImGuiIO& io = ImGui::GetIO();
@@ -471,6 +558,7 @@ void Panda3DImGui::setup_font_texture()
 
     io.Fonts->TexID = font_texture_.p();
 }
+*/
 
 NodePath Panda3DImGui::create_geomnode(const GeomVertexData* vdata)
 {

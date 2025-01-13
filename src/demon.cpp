@@ -25,7 +25,7 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	le.init();
 	
 	// 2. Setup game and editor viewport camera masks
-	BitMask32 ed_mask   = BitMask32::bit(0) | BitMask32::bit(1);
+	BitMask32 ed_mask   = BitMask32::bit(0);
 	BitMask32 game_mask = BitMask32::bit(1);
 	
 	DCAST(Camera, engine.scene_cam.node())->set_camera_mask(ed_mask);
@@ -34,20 +34,23 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	DCAST(Camera, game.main_cam.node())->set_camera_mask(game_mask);
 	DCAST(Camera, game.cam2D.node())->set_camera_mask(game_mask);
 	
-	// hide editor only geo from game view
+	// hide editor only geo from game view and vice versa
 	engine.axisGrid.hide(game_mask);
 	engine.render2d.find("**/SceneCameraAxes").hide(game_mask);
+	p3d_imgui.get_root().hide(game_mask);
+	
+	game.p3d_imgui.get_root().hide(ed_mask);
+	game.p3d_imgui.get_root().show(game_mask);
 		
 	// 3. Create update task
 	PT(AsyncTask) update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
-		
+
 		engine.update();
 		imgui_update();
 		engine.dispatch_events(mouse_over_ui);
 		engine.engine->render_frame();
 		
 		mouse_over_ui = false;
-		
 		return AsyncTask::DS_cont;
 	}, "EngineUpdate"));
 	
@@ -55,7 +58,7 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	AsyncTaskManager::get_global_ptr()->add(update_task);
 	
 	// 4. event hooks
-	engine.define_event("window", [this](std::vector<void*>& params) { this->handleWinEvent = true; }, {});
+	engine.define_event("window-event", [this](std::vector<void*>& params) { this->handleWinEvent = true; }, {});
 	
     // 5. Loop through all tasks in the task manager
     auto task_mgr = AsyncTaskManager::get_global_ptr();
@@ -72,8 +75,7 @@ Demon::~Demon() {
 
 void Demon::start() {
 	while (!engine.win->is_closed()) {
-		AsyncTaskManager::get_global_ptr()->poll();
-		handleWinEvent = false;		
+		AsyncTaskManager::get_global_ptr()->poll();	
 	}
 }
 
@@ -175,33 +177,35 @@ void Demon::imgui_update() {
 	
 	// editor ui update
 	ImGui::SetCurrentContext(this->p3d_imgui.context_);
-	this->p3d_imgui.new_frame_imgui();
-	this->handle_imgui_mouse(this->engine.mouse_watcher, &this->p3d_imgui);
-	
 	if (this->handleWinEvent)
 		this->p3d_imgui.on_window_resized();
 	
+	this->p3d_imgui.new_frame_imgui();
+	this->handle_imgui_mouse(this->engine.mouse_watcher, &this->p3d_imgui);
+		
 	for (auto event_it = engine.event_map["editor_imgui"].begin(); event_it != engine.event_map["editor_imgui"].end(); ++event_it)
 		event_it->callable(event_it->optional_params);
 	
-	if(ImGui::IsWindowHovered()) { mouse_over_ui = true; }
-	
 	this->p3d_imgui.render_imgui();
+	if(ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
 	
 	// game view imgui
 	ImGui::SetCurrentContext(this->game.p3d_imgui.context_);
-	this->game.p3d_imgui.new_frame_imgui();
-	this->handle_imgui_mouse(this->game.mouse_watcher, &this->game.p3d_imgui);
-	
 	if (this->handleWinEvent)
 		this->game.p3d_imgui.on_window_resized();
-	 
+	
+	this->game.p3d_imgui.new_frame_imgui();
+	this->handle_imgui_mouse(this->game.mouse_watcher, &this->game.p3d_imgui);
+
 	for (auto event_it = engine.event_map["game_imgui"].begin(); event_it != engine.event_map["game_imgui"].end(); ++event_it)
 		event_it->callable(event_it->optional_params);
-	
-	if(ImGui::IsWindowHovered()) { mouse_over_ui = true; }
-		
+
 	this->game.p3d_imgui.render_imgui();
+	if (ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
+	
+	if(this->handleWinEvent) {
+		this->handleWinEvent = false;
+	}
 }
 
 void Demon::handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui) {
