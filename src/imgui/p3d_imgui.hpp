@@ -88,6 +88,8 @@ public:
 	
 	int last_resolution_x;
 	int last_resolution_y;
+	
+	bool should_repaint;
 
 private:
     void setup_font_texture();

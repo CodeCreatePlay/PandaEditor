@@ -98,11 +98,14 @@ public:
 	void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
 	void remove_event_hook(int key);
 	void define_event(std::string evt_name, Callable callback, std::vector<void*> optional_params = {});
+	void dispatch_event(std::string evt_name);
 	void dispatch_events(bool ignore_mouse = false);
 
+	void on_evt_size();
+	
 	float get_aspect_ratio();
+	bool should_repaint;
     LVecBase2i get_size();
-	std::string get_current_event();
 	
 private:
     void create_win();
@@ -113,7 +116,6 @@ private:
 	void setup_mouse_keyboard(MouseWatcher*& mw);
 	
 	void process_events(CPT_Event event);
-	void on_evt_size();
 	void reset_clock();
 	
 	std::unordered_map<int, std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;

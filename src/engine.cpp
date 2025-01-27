@@ -109,10 +109,7 @@ void Engine::create_2d_render() {
     mouse_watcher->set_display_region(dr2d);
 }
 
-void Engine::create_default_scene() {
-
-    // Create default scene here
-}
+void Engine::create_default_scene() {}
 
 void Engine::create_axis_grid() {
 
@@ -168,10 +165,6 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
 void Engine::process_events(CPT_Event event) {
 		
     if (!event->get_name().empty()) {
-
-        if (event->get_name() == "window-event") {
-            on_evt_size();
-        }
 
         std::vector<void*> param_list;
         for (int i = 0; i < event->get_num_parameters(); ++i) {
@@ -237,6 +230,8 @@ void Engine::on_evt_size() {
     if (size.get_x() > 0 && size.get_y() > 0) {
         pixel2d.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
 	}
+	
+	should_repaint = true;
 }
 
 void Engine::reset_clock() {
@@ -319,6 +314,15 @@ void Engine::define_event(std::string evt_name, Engine::Callable callback, std::
 	Engine::event_map[evt_name].push_back(Engine::EventObj(callback, optional_params));
 }
 
+void Engine::dispatch_event(std::string evt_name) {
+	
+	if (event_map.find(evt_name) != event_map.end()) {
+		for (auto event_it = event_map[evt_name].begin(); event_it != event_map[evt_name].end(); ++event_it) {
+			event_it->callable(event_it->optional_params);
+		}
+	}
+}
+
 void Engine::dispatch_events(bool ignore_mouse) {
 
 	const Event* event;
@@ -334,7 +338,7 @@ void Engine::dispatch_events(bool ignore_mouse) {
 		// other
 		if(ignore_mouse && event->get_name().substr(0, 5) == "mouse")
 			continue;
-		
+
 		if (event_map.find(event->get_name()) != event_map.end()) {
 			for (auto event_it = event_map[event->get_name()].begin(); event_it != event_map[event->get_name()].end(); ++event_it) {
 				event_it->callable(event_it->optional_params);
@@ -355,11 +359,11 @@ LVecBase2i Engine::get_size() {
     if (win != nullptr) {
 
         if (DCAST(GraphicsWindow, win) && win->has_size()) {
+
 			// std::cout << "x size: " << win->get_sbs_left_x_size() << " y size: " << win->get_sbs_left_y_size() << std::endl;
 			return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
         }
     }
 
-    // WindowProperties props = WindowProperties::get_default();
     return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
 }

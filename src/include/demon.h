@@ -30,8 +30,9 @@ public:
 private:
 	bool cleaned_up;
 	bool is_game_mode;
-	bool handleWinEvent;
-	bool mouse_over_ui = false;
+	bool mouse_over_ui;
+	
+	int frames_passed_since_last_repait;
 	
 	// ---------------------------------------------------------------------------------------------
 	// imgui

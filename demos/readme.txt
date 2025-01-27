@@ -3,4 +3,4 @@
 
 2.	The "example_code" folder contains code snippets demonstrating the usage of various tools and systems. 
 	Each snippet is a self-contained program that can be built using the included "build.sh" script. 
-	To build a program, run the bash script and enter the name of any code snippet from the "example_code" folder.
+	To compile a program, run the bash script and enter the name of any code snippet from the "example_code" folder.

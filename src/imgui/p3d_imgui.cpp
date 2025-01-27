@@ -144,6 +144,8 @@ void Panda3DImGui::init(GraphicsWindow* window, MouseWatcher* mw, NodePath *pare
 	// 
 	last_resolution_x = 800;
 	last_resolution_y = 600;
+	
+	should_repaint = false;
 }
 
 void Panda3DImGui::setup_style(Style style)
@@ -288,6 +290,7 @@ void Panda3DImGui::on_window_resized(const LVecBase2& size)
 	// ------------------------------------------------------------------------------
 
     // Save the new resolution as the last resolution for future reference
+	// std::cout << "win size x: " << size[0] << "win size y: " << size[1] << std::endl; 
     last_resolution_x = size[0];
     last_resolution_y = size[1];
 	

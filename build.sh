@@ -116,8 +116,8 @@ print_project_tree() {
                     local dir_name=$(basename "$sub_dir")
                     count=$((count + 1))
 
-                    # Check if it's the 'assets' directory
-                    if [ "$dir_name" == "assets" ]; then
+                    # Check if it's one of reserved dirs
+                    if [ "$dir_name" == "_assets" ] || [ "$dir_name" == "_example_code" ]; then
 						continue
 					fi
 
