@@ -22,16 +22,16 @@ function get_program() {
 		
 		if [[ "$program_name" == "-1" ]]; then
 			exit 1
-		elif [[ -f "$(pwd)/example_code/$program_name.cpp" ]]; then
-			OUTPUT="$(pwd)/example_code/$program_name"
-			FILE_NAME="$(pwd)/example_code/$program_name.cpp"
+		elif [[ -f "$(pwd)/_example_code/$program_name.cpp" ]]; then
+			OUTPUT="$(pwd)/_example_code/executables/$program_name"
+			FILE_NAME="$(pwd)/_example_code/$program_name.cpp"
 			break
-		elif [[ -f "$(pwd)/example_code/$program_name.hpp" ]]; then
-			OUTPUT="$(pwd)/example_code/$program_name"
-			FILE_NAME="$(pwd)/example_code/$program_name.hpp"
+		elif [[ -f "$(pwd)/_example_code/$program_name.hpp" ]]; then
+			OUTPUT="$(pwd)/_example_code/executables/$program_name"
+			FILE_NAME="$(pwd)/_example_code/$program_name.hpp"
 			break
 		else
-			echo -e "$(pwd)/example_code/$program_name\n"
+			echo -e "\n$(pwd)/_example_code/$program_name"
 			echo -e "Invalid entry! \n"
 			continue
 		fi

@@ -53,12 +53,12 @@ void on_game_new_frame() {
 		std::cout << "Game UI Button Clicked\n";
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
+    Demon &demon = Demon::get_instance();
 	
-    Demon demon;
-	
-	demon.engine.define_event("editor_imgui", [](std::vector<void*>& params){ on_imgui_new_frame(); }, {});
-	demon.engine.define_event("game_imgui",   [](std::vector<void*>& params){ on_game_new_frame();  }, {});
+	demon.engine.add_event_hook("editor_imgui", [](std::vector<void*>& params){ on_imgui_new_frame(); }, {});
+	demon.engine.add_event_hook("game_imgui",   [](std::vector<void*>& params){ on_game_new_frame();  }, {});
 	
     demon.start();
 		

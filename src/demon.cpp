@@ -72,8 +72,7 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	AsyncTaskManager::get_global_ptr()->add(update_task);
 	
 	// 4. event hooks
-	engine.define_event("window-event",
-		[this](std::vector<void*>& params) { engine.on_evt_size(); }, {});
+	engine.add_event_hook("window-event", [this](std::vector<void*>& params) { engine.on_evt_size(); }, {});
 
     // 5. Loop through all tasks in the task manager
     auto task_mgr = AsyncTaskManager::get_global_ptr();
@@ -188,7 +187,7 @@ void Demon::imgui_update() {
 	ImGui::SetCurrentContext(this->p3d_imgui.context_);
 	
 	if (this->p3d_imgui.should_repaint) {
-				
+		
 		this->p3d_imgui.on_window_resized();
 		this->p3d_imgui.should_repaint = false;
 	}

@@ -13,8 +13,16 @@
 
 class Demon {
 public:
-    Demon();
-    ~Demon();
+    // Delete copy constructor and assignment operator
+	// necessary for singleton
+    Demon(const Demon&) = delete;
+    Demon& operator=(const Demon&) = delete;
+	
+	// Public method to get the singleton instance
+    static Demon& get_instance() {
+        static Demon instance; // Static local instance, created once
+        return instance;
+    }
 	
 	void start();
 	void setup_paths();
@@ -28,6 +36,9 @@ public:
 	LevelEditor le;
 	
 private:
+    Demon();
+    ~Demon();
+
 	bool cleaned_up;
 	bool is_game_mode;
 	bool mouse_over_ui;
@@ -41,6 +52,11 @@ private:
 	void init_imgui_task();
 	void imgui_update();
 	void handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui);
+	
+	// Delete the 'delete' operator to prevent manual deletion
+	// necessary for singleton
+    void operator delete(void*) = delete;
+    void operator delete[](void*) = delete;  // Prevents array deletion
 };
 
 #endif

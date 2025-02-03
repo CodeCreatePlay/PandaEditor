@@ -12,8 +12,8 @@ void LevelEditor::init() {
 	mouse_picker.init(&demon->engine);
 	marquee.init(&demon->engine, demon->game.render);
 	
-	demon->engine.define_event( "mouse1",    [this](std::vector<void*>& params) { return this->on_mouse(params);    }, {} );
-	demon->engine.define_event( "mouse1-up", [this](std::vector<void*>& params) { return this->on_mouse_up(params); }, {} );
+	demon->engine.add_event_hook( "mouse1",    [this](std::vector<void*>& params) { return this->on_mouse(params);    }, {} );
+	demon->engine.add_event_hook( "mouse1-up", [this](std::vector<void*>& params) { return this->on_mouse_up(params); }, {} );
 }
 
 std::vector<NodePath> LevelEditor::get_selected_nps() { return selected_nps; }

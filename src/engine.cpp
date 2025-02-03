@@ -274,27 +274,21 @@ void Engine::clean_up() {
 }
 
 void Engine::add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
-	
-	auto result = evt_hooks.emplace(key, hook);
-	
-	if (result.second)
-	{
-		evt_hooks[key] = hook;
-    }
-	else
-	{
+
+    auto result = evt_hooks.emplace(key, hook);
+    if (!result.second) {
         std::ostringstream message;
         message << "Unable to set event hook, Key: " << key << " already exists! Available keys: ";
 
+        // Standard loop (C++14 friendly)
         for (auto it = evt_hooks.begin(); it != evt_hooks.end(); ++it) {
             message << it->first << ", ";
         }
 
         std::string output = message.str();
-		
-        // Remove the trailing comma and space
         if (!evt_hooks.empty()) {
-            output = output.substr(0, output.size() - 2);
+            output.pop_back();  // Remove last space
+            output.pop_back();  // Remove last comma
         }
 
         std::cout << output << std::endl;
@@ -302,6 +296,7 @@ void Engine::add_event_hook(int key, std::function<void(const Event*, const std:
 }
 
 void Engine::remove_event_hook(int key) {
+	
 	if (evt_hooks.find(key) == evt_hooks.end()) {
 		evt_hooks.erase(key);
     }
@@ -310,7 +305,8 @@ void Engine::remove_event_hook(int key) {
     }
 }
 
-void Engine::define_event(std::string evt_name, Engine::Callable callback, std::vector<void*> optional_params) {
+void Engine::add_event_hook(std::string evt_name, Engine::Callable callback, std::vector<void*> optional_params) {
+	
 	Engine::event_map[evt_name].push_back(Engine::EventObj(callback, optional_params));
 }
 

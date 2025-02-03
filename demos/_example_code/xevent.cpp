@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------
 // Demonstrates basic example usage of XEvent, a robust alternative to
-// Panda3D's default event_system, recommended for most purposes.
+// Panda3D's default event_system, recommended for custom events.
 // -------------------------------------------------------------------
 
 
@@ -83,6 +83,6 @@ int main(int argc, char* argv[]) {
 	// Dispatch all queued events
 	std::cout << "\n Dispatching queued events!\n";
 	eventManager.DispatchEvents(); // TestObj handles the queued events here
-		
+
     return 0;
 }

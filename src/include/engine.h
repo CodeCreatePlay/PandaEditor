@@ -96,15 +96,18 @@ public:
 	void clean_up();
 	
 	void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
+	void add_event_hook(std::string evt_name, Callable callback, std::vector<void*> optional_params = {});
+	
 	void remove_event_hook(int key);
-	void define_event(std::string evt_name, Callable callback, std::vector<void*> optional_params = {});
+	void remove_event_hook(std::string evt_name);
+	
 	void dispatch_event(std::string evt_name);
 	void dispatch_events(bool ignore_mouse = false);
 
 	void on_evt_size();
 	
-	float get_aspect_ratio();
 	bool should_repaint;
+	float get_aspect_ratio();
     LVecBase2i get_size();
 	
 private:

@@ -207,9 +207,9 @@ function get_project {
             PROJECT_NAME="$project_name"
 			
 			# check if assets folder exists
-			if [ ! -d "$(pwd)/demos/assets" ]; then
+			if [ ! -d "$(pwd)/demos/_assets" ]; then
 				# configure demo assets folder
-				echo "Demo assets folder not found."
+				echo "Assets folder not found."
 				while true; do
 					read -p "Download the 'assets' folder? (y/n): " response
 					case "$response" in
