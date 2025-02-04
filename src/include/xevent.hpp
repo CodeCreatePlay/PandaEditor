@@ -7,14 +7,15 @@
 #include <queue>
 #include <memory>
 #include <mutex>
-#include <typeindex>
-#include <typeinfo>
+#include <string>
+#include <algorithm>
+
 
 // Base Event Class
 class XEvent {
 public:
     virtual ~XEvent() = default;
-    virtual std::type_index GetEventType() const = 0;
+    virtual std::string GetEventKey() const = 0; // Unique string key for the event type
     void StopPropagation() { propagationStopped = true; }
     bool IsPropagationStopped() const { return propagationStopped; }
 
@@ -22,8 +23,7 @@ private:
     bool propagationStopped = false;
 };
 
-template <typename EventType>
-using XEventHandler = std::function<void(const EventType&)>;
+using XEventHandler = std::function<void(const XEvent&)>;
 
 class XEventManager {
 public:
@@ -33,7 +33,7 @@ public:
     }
 
     ~XEventManager() = default;
-	
+
     // Prevent copying
     XEventManager(const XEventManager&) = delete;
     XEventManager& operator=(const XEventManager&) = delete;
@@ -42,30 +42,28 @@ public:
     XEventManager(XEventManager&&) = delete;
     XEventManager& operator=(XEventManager&&) = delete;
 
-    template <typename EventType>
-    void Subscribe(const XEventHandler<EventType>& handler) {
+    void Subscribe(const std::string& eventKey, const XEventHandler& handler) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto& handlers = subscribers_[typeid(EventType)];
-        handlers.emplace_back(std::make_unique<XEventHandlerWrapper<EventType>>(handler));
+        subscribers_[eventKey].emplace_back(handler);
     }
 
-    template <typename EventType>
-    void Unsubscribe(const XEventHandler<EventType>& handler) {
+    void Unsubscribe(const std::string& eventKey, const XEventHandler& handler) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto& handlers = subscribers_[typeid(EventType)];
-        auto it = std::remove_if(handlers.begin(), handlers.end(),
-            [&handler](const std::unique_ptr<XEventHandlerWrapperBase>& wrapper) {
-                return wrapper->GetHandlerType() == typeid(handler).name();
-            });
-        handlers.erase(it, handlers.end());
+        auto& handlers = subscribers_[eventKey];
+        handlers.erase(std::remove_if(handlers.begin(), handlers.end(),
+            [&handler](const XEventHandler& registeredHandler) {
+                return handler.target<void(const XEvent&)>() ==
+                       registeredHandler.target<void(const XEvent&)>();
+            }),
+            handlers.end());
     }
 
     void TriggerEvent(const XEvent& event) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = subscribers_.find(event.GetEventType());
+        auto it = subscribers_.find(event.GetEventKey());
         if (it != subscribers_.end()) {
             for (auto& handler : it->second) {
-                handler->Execute(event);
+                handler(event);
                 if (event.IsPropagationStopped()) break;
             }
         }
@@ -88,31 +86,7 @@ public:
 private:
     XEventManager() = default;
 
-    class XEventHandlerWrapperBase {
-    public:
-        virtual ~XEventHandlerWrapperBase() = default;
-        virtual void Execute(const XEvent& e) = 0;
-        virtual std::string GetHandlerType() const = 0;
-    };
-
-    template <typename EventType>
-    class XEventHandlerWrapper : public XEventHandlerWrapperBase {
-    public:
-        explicit XEventHandlerWrapper(const XEventHandler<EventType>& handler)
-            : handler_(handler), handlerType_(typeid(handler).name()) {}
-
-        void Execute(const XEvent& e) override {
-            handler_(static_cast<const EventType&>(e));
-        }
-
-        std::string GetHandlerType() const override { return handlerType_; }
-
-    private:
-        XEventHandler<EventType> handler_;
-        std::string handlerType_;
-    };
-
-    std::unordered_map<std::type_index, std::vector<std::unique_ptr<XEventHandlerWrapperBase>>> subscribers_;
+    std::unordered_map<std::string, std::vector<XEventHandler>> subscribers_;
     std::queue<std::unique_ptr<XEvent>> eventQueue_;
     mutable std::mutex mutex_;
     mutable std::mutex queueMutex_;

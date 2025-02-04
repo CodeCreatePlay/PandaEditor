@@ -70,9 +70,6 @@ void Game::init() {
 	mouse_watcher = new MouseWatcher("GameMouse");
 	NodePath mouse_watcher_ = demon->engine.mouse_watchers[0].get_parent().attach_new_node(mouse_watcher);
 	
-	//button_thrower = new ButtonThrower("Button_Thrower_01-game");
-	//mouse_watcher_.attach_new_node(button_thrower);
-	
     mouse_watcher->set_display_region(dr2D);
 	DCAST(PGTop, pixel2D.node())->set_mouse_watcher(mouse_watcher);
 	

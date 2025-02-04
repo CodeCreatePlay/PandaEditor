@@ -16,7 +16,6 @@ public:
     void init();
     void on_evt(const Event* evt, const std::vector<void*>& params);
 	
-	//ButtonThrower* button_thrower;
 	NodePath render;
     NodePath render2D;
 	NodePath aspect2D;
@@ -33,7 +32,6 @@ public:
 
 private:
 	Demon* demon;
-    // MouseWatcher* mouse_watcher;
 
     void create_dr2D();
     void create_dr3D();
