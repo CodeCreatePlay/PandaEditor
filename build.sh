@@ -117,7 +117,7 @@ create_print_project_tree() {
                     count=$((count + 1))
 
                     # Check if it's one of reserved dirs
-                    if [[ "$dir_name" == "_assets" ]] || [[ "$dir_name" == "_example_code" ]]; then
+                    if [[ "$dir_name" == "_assets" ]]; then
                         continue
                     fi
 
@@ -273,7 +273,7 @@ function configure_project {
     if [[ -z "$(find "$PROJECT_PATH" -mindepth 1 -maxdepth 1)" ]]; then
         # Create a new main.cpp file with boilerplate code
         cat <<EOF > "$PROJECT_PATH/main.cpp"
-#include "Demon.h"
+#include "demon.h"
 
 
 class MyApp {
