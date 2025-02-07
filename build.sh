@@ -1,32 +1,33 @@
 #!/bin/bash
 
 # Detect OS and store in OS_TYPE
-case "$OSTYPE" in
-  darwin*)       OS_TYPE="macOS" ;;
-  linux*)        OS_TYPE="Linux" ;;
-  msys*|cygwin*) OS_TYPE="Windows" ;;
-  *)             
-    echo "Unsupported OS: $OSTYPE"
-    read -n 1 -s -r -p "Exiting, Press any key to continue."
+case "$(uname -s)" in
+  Darwin*) OS_TYPE="macOS" ;;
+  Linux*)  OS_TYPE="Linux" ;;
+  CYGWIN*|MINGW*|MSYS*) OS_TYPE="Windows" ;;
+  *)
+    echo "Unsupported OS: $(uname -s)"
+    pause_if_interactive
     exit 1
     ;;
 esac
-
-set -e  # Exit immediately if any command fails
 
 # Function to check if a command exists
 function check_dependency {
     if ! command -v "$1" &> /dev/null; then
         echo "Error: Required dependency '$1' is not installed. Please install it before proceeding."
-        read -n 1 -s -r -p "Press any key to continue..."
+        pause_if_interactive
         exit 1
     fi
 }
 
-# Check required dependencies
-check_dependency "cmake"
-check_dependency "curl"
-check_dependency "unzip"
+# Function to pause execution if running interactively
+function pause_if_interactive {
+    if [[ -t 1 ]]; then
+        read -n 1 -s -r -p "Press any key to continue..."
+        echo
+    fi
+}
 
 # Function to check command success status
 function check_command_success_status {
@@ -34,54 +35,153 @@ function check_command_success_status {
     local status=$?
     if [[ $status -ne 0 ]]; then
         echo "Error: Command '$*' failed."
-        read -n 1 -s -r -p "Press any key to continue..."
+        pause_if_interactive
         exit 1
     fi
 }
 
-# Create logs directory if it doesn't exist
-check_command_success_status mkdir -p logs
+# Function to download with curl or powershell
+function download {
+    local url="$1"
+    local output="$2"
 
-# Set default build type and paths
+    if command -v curl &>/dev/null; then
+        # echo "Downloading using curl..."
+        check_command_success_status curl --fail --silent --show-error --retry 3 --connect-timeout 10 --max-time 60 -# -L "$url" -o "$output"
+
+    elif command -v powershell &>/dev/null; then
+        # echo "Downloading using PowerShell..."
+        check_command_success_status powershell -Command "Invoke-WebRequest -Uri '$url' -OutFile '$output'"
+
+    else
+        echo "Error: curl is not available and no fallback download method found."
+        pause_if_interactive
+        exit 1
+    fi
+}
+
+# Function to extract contents of zip file
+function extract_zip {
+    local zip_file="$1"
+    local destination="$2"
+
+    if command -v unzip &>/dev/null; then
+        echo "Extracting using unzip..."
+        check_command_success_status unzip -q "$zip_file" -d "$destination"
+
+    elif [[ "$OS_TYPE" == "Windows" ]]; then
+        if command -v powershell &>/dev/null; then
+            # echo "Extracting using PowerShell..."
+            check_command_success_status powershell -Command "Expand-Archive -Path '$zip_file' -DestinationPath '$destination' -Force"
+
+        elif command -v 7z &>/dev/null; then
+            # echo "Extracting using 7-Zip..."
+            check_command_success_status 7z x "$zip_file" -o"$destination" -y
+
+        else
+            echo "Error: No suitable extraction tool found (unzip, PowerShell, or 7-Zip)."
+            pause_if_interactive
+            exit 1
+        fi
+
+    else
+        echo "Error: unzip is required but not found."
+        pause_if_interactive
+        exit 1
+    fi
+}
+
+
+# Set Globals
 BUILD_TYPE="Release"
+LOGGING_DIR="$(pwd)/logs"
 THIRDPARTY_DIR="$(pwd)/src/thirdparty"
+PROJECT_DIR="$(pwd)/game"
 IMGUI_VERSION="v1.91.2"
 
-# Ensure third-party directory exists
-if [[ ! -d "$THIRDPARTY_DIR" ]]; then
-    echo "Creating third-party directory..."
-    check_command_success_status mkdir -p "$THIRDPARTY_DIR"
-fi
+# ------------------------------------------------------------------ #
+# Ensure necessary directories, exist
+check_command_success_status mkdir -p "$LOGGING_DIR" "$THIRDPARTY_DIR" "$PROJECT_DIR"
 
-# Ensure project directory exists
-PROJECT_DIR="$(pwd)/game"
-if [[ ! -d "$PROJECT_DIR" ]]; then
-    echo "Creating project directory..."
-    check_command_success_status mkdir -p "$PROJECT_DIR"
-fi
 
-# Download ImGui if not already downloaded
+# ------------------------------------------------------------------ #
+# Function to check configure CMake configuration file
+function configure_cmake_config_file
+{
+	local config_file="$1"
+
+	if [[ ! -f "$config_file" ]]; then
+		echo "Panda3D configuration file not found."
+
+		# Prompt user to input Panda3D installation path
+		echo "Please provide the path to Panda3D installation."
+		read -r -p "Enter the full path to Panda3D (e.g., C:/Panda3D-1.10.15-x64 or /opt/panda3d): " panda3D_path
+
+		# Normalize path (replace backslashes with forward slashes)
+		panda3D_path="${panda3D_path//\\//}"
+
+		# Check if the provided path exists
+		if [[ ! -d "$panda3D_path" ]]; then
+			echo "Error: The provided Panda3D path '$panda3D_path' does not exist. Exiting."
+			pause_if_interactive
+			exit 1
+		fi
+
+		# Create the CMake config file with the provided path
+		echo -e "Creating CMake configuration file...\n"
+
+    cat << EOF > "$config_file"
+# Path to the root installation of Panda3D
+set(PANDA3D_ROOT "$panda3D_path" CACHE STRING "Path to the Panda3D installation")
+
+# Include and library directories
+set(PANDA3D_INCLUDE_DIR "\${PANDA3D_ROOT}/include")
+set(PANDA3D_LIBRARY_DIR "\${PANDA3D_ROOT}/lib")
+EOF
+	fi
+}
+
+check_dependency "cmake" # Ensure cmake exists
+configure_cmake_config_file "config.cmake"  # Create the CMake config file
+
+# ------------------------------------------------------------------ #
+# Download and extract ImGui if not already present
 if [[ ! -d "$THIRDPARTY_DIR/imgui" ]]; then
-    echo "Downloading ImGui from GitHub as ZIP..."
-    check_command_success_status curl -L "https://github.com/ocornut/imgui/archive/refs/tags/$IMGUI_VERSION.zip" -o imgui.zip
+    echo "Downloading ImGui ($IMGUI_VERSION)..."
 
+    # Download
+	url="https://github.com/ocornut/imgui/archive/refs/tags/$IMGUI_VERSION.zip"
+	download "$url" "imgui.zip"
+
+	# Extract
     echo "Extracting ImGui..."
-    check_command_success_status unzip imgui.zip -d "$THIRDPARTY_DIR"
+	extract_zip "imgui.zip" "$THIRDPARTY_DIR"
 
-    # echo "Renaming ImGui directory..."
-    check_command_success_status mv "$THIRDPARTY_DIR/imgui-${IMGUI_VERSION#v}" "$THIRDPARTY_DIR/imgui"
+    # Find extracted directory dynamically
+    extracted_dir=$(find "$THIRDPARTY_DIR" -maxdepth 1 -type d -name "imgui-*" | head -n 1)
+    if [[ -d "$extracted_dir" ]]; then
+        check_command_success_status mv "$extracted_dir" "$THIRDPARTY_DIR/imgui"
+    else
+        echo "Error: ImGui extraction failed."
+        pause_if_interactive
+        exit 1
+    fi
+	
+	# Remove unnecessary files
+    echo "Cleaning up..."
+    check_command_success_status rm imgui.zip
 
-    echo "Removing ImGui zip file..."
-    rm imgui.zip || { echo "Error: Failed to remove imgui.zip"; read -n 1 -s -r -p "Press any key to continue..."; exit 1; }
-
-    echo "ImGui setup completed."
+    echo -e "ImGui setup completed successfully.\n"
 fi
 
+
+# ------------------------------------------------------------------ #
+# Function to display folder structure
 declare -A USERS_PROJECTS
 declare -A DEMO_PROJECTS
 
-# Function to display folder structure with custom annotations
-create_print_project_tree() {
+create_print_project_tree() 
+{
     local base_dir="$(pwd)"
     
     # Define annotations for the top-level directories
@@ -157,13 +257,13 @@ create_print_project_tree() {
     echo ""
 }
 
-
+# Function to get user input
 PROJECT_NAME="" # project name
 PROJECT_PATH="" # project directory
 BUILD_DIR=""    # build directory
 
-function get_project_from_user {
-
+function get_project_from_user
+{
     while true; do
         # Prompt the user for the project name
         read -p "Enter project name / index or -1 to exit: " project_name
@@ -261,8 +361,9 @@ function get_project_from_user {
     done
 }
 
-function configure_project {
-
+# Function to configure project initialization
+function configure_project
+{
     if [[ -n "$1" ]] && [[ ! -d "$(pwd)/demos/$1" ]] && [[ ! -d "$(pwd)/game/$1" ]]; then
         echo "Specified project $1 not found!"
         read -n 1 -s -r -p "Press any key to continue..."
@@ -318,16 +419,26 @@ function set_build_directory {
 function log_cmake_output {
     local log_file="$1"
     shift
-    if ! touch "$log_file" &> /dev/null; then
+    
+    # Check if the directory is writable and the file is either writable or can be created
+    if [[ ! -w "$(dirname "$log_file")" ]]; then
+        echo "Error: Cannot write to the directory of log file '$log_file'."
+        read -n 1 -s -r -p "Press any key to continue..."
+        exit 1
+    fi
+
+    # If the file exists, check if it's writable
+    if [[ -f "$log_file" && ! -w "$log_file" ]]; then
         echo "Error: Cannot write to log file '$log_file'."
         read -n 1 -s -r -p "Press any key to continue..."
         exit 1
     fi
+
+    # Execute command and log output
     "$@" 2>&1 | tee -a "$log_file"
-    check_command_success_status
 }
 
-# Configure project with CMake in the determined build directory
+# Function to configure project with CMake in the determined build directory
 function run_cmake_config {
     local cmake_arch_option=""
     local path=$(basename "$PROJECT_PATH")
@@ -339,18 +450,20 @@ function run_cmake_config {
     fi
 
     # Clear previous log and configure the project
-    : > "$BUILD_DIR"/build-log.log
-    echo -e "Starting Configuration with CMake..." >> "$BUILD_DIR"/build-log.log
-    log_cmake_output "$BUILD_DIR"/build-log.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
+    : > "$LOGGING_DIR"/build-log.log
+    echo -e "Starting Configuration with CMake..." >> "$LOGGING_DIR"/build-log.log
+    log_cmake_output "$LOGGING_DIR"/build-log.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
 }
 
-# Build project with CMake
+# Function to build project with CMake
 function run_cmake_build {
-    : > "$BUILD_DIR"/build-log.log
-    echo -e "\n\nStarting Build..." >> "$BUILD_DIR"/build-log.log
-    log_cmake_output "$BUILD_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
+    # : > "$BUILD_DIR"/build-log.log
+    echo -e "\n\nStarting Build..." >> "$LOGGING_DIR"/build-log.log
+    log_cmake_output "$LOGGING_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
 }
 
+
+# ------------------------------------------------------------------ #
 # Starting point
 create_print_project_tree
 get_project_from_user
@@ -361,7 +474,9 @@ set_build_directory "$PROJECT_NAME"
 run_cmake_config "$PROJECT_NAME"
 run_cmake_build
 
-# Start the executable
+
+# ------------------------------------------------------------------ #
+# Finally, start the executable
 # Set executable name based on OS
 EXECUTABLE_NAME="game"
 if [[ "$OS_TYPE" = "Windows" ]]; then
