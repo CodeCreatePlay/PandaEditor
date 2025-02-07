@@ -1,11 +1,10 @@
-# PandaEditor
-**An effort to make Panda3D more robust and user-friendly for artists and game developers by adding scene and level editor features, along with a new rendering pipeline. This project when completed will enable users to design, visualize, and organize projects directly within the editor, providing a cohesive environment to streamline the development process.**
+## PandaEditor is an open-source 3D level and scene editor designed for games, simulations and scientific projects. It is powered by Panda3D game engine and offers support for scripting in both Python and C++.
 
 ## TableOfContents
-1. [Building and Configuring PandaEditor Projects]()
+1. [Prerequisites and Configuration]()
 2. [HelloWorld Tutorial]()
 
-<h2 align="center">Building and Configuring PandaEditor Projects</h2>
+<h2 align="center">Prerequisites and Configuration</h2>
 
 ### Prerequisites
 - Git
@@ -17,30 +16,38 @@
 - curl and unzip for downloading and extracting assets (available by default on most systems)
 - Other dependencies are downloaded at runtime.
 
-### Cloning the repository
+### Getting PandaEditor
 
-- To clone this repository,
-
+1. Using Git
 	```
 	git clone <https://github.com/CodeCreatePlay/PandaEditor>
 	```
+2. Manual Download
+   - Download the repository as a ZIP file.
+   - Extract it to a location of your choice on your system.
 
-- Alternatively, you can manually download it as a ZIP file.
+<h2 align="center">HelloWorld tutorial</h2>
 
-### Configuring CMake
-Update the `config.cmake` file in the root directory to set up the paths for Panda3D, as shown below.
+PandaEditor uses a project-based workflow managed by its build system, which also handles most of the setup and initialization for you, including,
 
-```
-# Example config.cmake file
-# Panda3D library and include paths
-set(PANDA3D_LIBRARY_DIR "path_to_your_panda3d_lib_directory")
-set(PANDA3D_INCLUDE_DIR "path_to_your_panda3d_include_directory")
-```
+- Downloading dependencies.
+- Projects management.
+- Generating some boilerplate code to help you get started.
 
-### Starting the build
-Use the included `build.sh` script to start the build. The executable should launch automatically at the end. To start it manually later, you can find it in `builds/project-name/Release` (or equivalent) directory. The `build.sh` script will prompt you to enter the project name. If the specified project is not found, you'll have the option to create it; otherwise, the script would exit.
- 
-The system will search for specified project in two directories `game` and `demos`, then source files from only the specified project directory are included.
+For now, everything is managed through its command-line interface.
+
+### Creating a new project
+1. Start the build.sh script.
+2. When prompted, enter the project name or index number.
+3. If the specified project does not exist, you will have the option to create it or choose another.
+
+The system will then search for the project in two directories:
+- `game` → Stores user-created projects.
+- `demos` → Contains built-in demo projects.
+
+Each folder inside `game` or `demos` represents a separate project, and source files from only the selected project are included in the build.
+
+### Project structure
 
 Here is an example of how the project strcuture should look like.
 
@@ -61,22 +68,23 @@ src/
 │   └── roaming-ralph         # Build output for Roaming Ralph demo
 ```
 
-### Common Issues
-- Panda3D Library Not Found: Verify `config.cmake` contains the correct paths.
-- Unsupported Compiler: Ensure you're using a supported compiler (MSVC on Windows; GCC or Clang elsewhere).
+### Boilerplate code explaination
+1. When you create a new project, some boilerplate code is automatically generated and added inside `main.cpp` file.  
+2. PandaEditor uses the Demon singleton class to set up and initialize the Panda3D game engine and editor environment. To start the editor, you need to:
+   - Get a reference to Demon.
+   - Call its start() method. 
 
-<h2 align="center">HelloWorld tutorial</h2>
-
-PandaEditor uses the `Demon` class to set up and initialize the underlying Panda3D game engine and editor environment. To start PandaEditor with minimal setup, you only need to create an instance of the `Demon` class and call its start method.
+- **Basic example.**
 
 ```
 #include "demon.h"
 
 int main(int argc, char* argv[]) {
-    // Create an instance of the Demon class
-    Demon demon;
 
-    // your code goes here...
+    // Create an instance of the Demon class
+    Demon &demon = Demon::get_instance();
+
+    /*your code goes here...*/
 
     // Initialize and start the PandaEditor
     demon.start();
@@ -87,30 +95,52 @@ int main(int argc, char* argv[]) {
 
 ```
 
-Or you can subclass from `Demon` class itself, also this is the recommended approach.
+- **Example code with `class`.**
 
 ```
-#include "Demon.h"
+#include "demon.h"
 
-class MyApp : public Demon {
+class MyApp {
 public:
-    MyApp() { 
+    MyApp() : demon( Demon::get_instance() )
+    { 
         // your code goes here...
     }
+	
+    void start()
+    {
+	demon.start();
+    }
+
+
+    Demon &demon;
 };
 
-
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
     MyApp app;
     app.start();
     return 0;
 }
+
 ```
 
-**Create a New Project Directory** Create a new directory in `game` folder and rename it appropriately for example 'HelloWorldProject'; each folder in `game` represents a unique folder, put all code related to a particular project in its corresponding project folder in `game` directory.
-	
-**Create a Source File** Inside your new project folder, create a source file. Then, copy and paste one of the example code snippets provided above into this file.
+### Common Issues
+- **Panda3D Library Not Found**
+  - Ensure cmake.config contains the correct paths.
+  - Verify that Panda3D is installed correctly.
+- **Unsupported Compiler** 
+    - Ensure you're using a supported compiler MSVC on Windows
+    - GCC or Clang otherwise.
+- **Panda3D installiation not found**
+	- Ensure that cmake.config exists (it should be automatically generated by the build system) and that PANDA3D_ROOT is correctly set to the root directory of your Panda3D installation. See the example below.
 
-**Build the Project** Back in PandaEditor main directory, start the `build.sh` script as explained in `Starting the build` section above, to start the build.
-
-**Starting Demo projects** `Demos` are projects just like user defined projects in `game` folder, to start a demo, simply enter the name of the demo as the project name, when build starts, the build would proceed as explained above.
+		```
+		# Path to the root installation of Panda3D
+		set(PANDA3D_ROOT "C:/Panda3D-1.10.15-x64" CACHE STRING "Path to the Panda3D installation")
+		
+		# Include and library directories
+		set(PANDA3D_INCLUDE_DIR "${PANDA3D_ROOT}/include")
+		set(PANDA3D_LIBRARY_DIR "${PANDA3D_ROOT}/lib")
+		```
+                                                                                                     
