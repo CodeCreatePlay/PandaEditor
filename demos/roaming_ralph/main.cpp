@@ -21,7 +21,7 @@
 #include "cameraCollisionHandler.cpp"
 
 
-static const std::string ASSETS_PATH = "demos/_assets/models";
+static const std::string ASSETS_PATH = "demos/_assets";
 
 class RoamingRalphDemo {
 public:
@@ -124,7 +124,7 @@ private:
 
 	void load_world()
 	{
-		environment = demon.engine.resourceManager.load_model(ASSETS_PATH + "/LevelTemp.egg");		
+		environment = demon.engine.resourceManager.load_model(ASSETS_PATH + "/Level.egg");		
 		environment.reparent_to(demon.game.render);
 		environment.set_pos(LPoint3(0.0f, 0.0f, 0.0f));
 		environment.ls();
