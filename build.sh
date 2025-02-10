@@ -96,6 +96,7 @@ function extract_zip {
 BUILD_TYPE="Release"
 LOGGING_DIR="$(pwd)/logs"
 THIRDPARTY_DIR="$(pwd)/src/thirdparty"
+DEMO_PROJECTS_DIR="$(pwd)/demos"
 PROJECT_DIR="$(pwd)/game"
 IMGUI_VERSION="v1.91.2"
 
@@ -314,12 +315,21 @@ function get_project_from_user
                     read -p "Download the 'assets' folder? (y/n): " response
                     case "$response" in
                         [yY])
-                            echo "Downloading 'assets'..."
-                            check_command_success_status curl -L "PLACE_HOLDER_WEB_ADDRESS" -o assets.zip
-                            check_command_success_status mkdir -p "$assets_dir"
-                            check_command_success_status unzip assets.zip -d "$assets_dir"
-                            check_command_success_status rm assets.zip
-                            echo "'assets' folder downloaded and extracted successfully."
+                           echo "Downloading assets for demo projects..."
+						   
+						   	# Download
+							url="https://drive.google.com/u/0/uc?id=1Vl7DXNMVhvGlLr-VKLxE1SCLdP4giTkN&export=download"
+							download "$url" "assets.zip"
+
+							# Extract
+							echo "Extracting Assets..."
+							extract_zip "assets.zip" "$DEMO_PROJECTS_DIR"
+
+							# Remove unnecessary files
+							echo "Cleaning up..."
+							check_command_success_status rm assets.zip
+							echo "Assets folder downloaded and extracted successfully."
+							break 1
                             ;;
                         [nN])
                             echo -e "Assets download canceled. Please choose another project.\n"
