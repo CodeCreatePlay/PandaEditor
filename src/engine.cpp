@@ -2,7 +2,10 @@
 #include "engine.h"
 
 
-Engine::Engine() {
+int MOUSE_ALT  = KeyboardButton::alt().get_index();
+int MOUSE_CTRL = KeyboardButton::control().get_index();
+
+Engine::Engine() : mouse(*this), scene_cam(*this) {
 
     data_root = NodePath("DataRoot");
 
@@ -14,15 +17,16 @@ Engine::Engine() {
     create_win();
     setup_mouse_keyboard(mouse_watcher);
 
-    mouse = Mouse(DCAST(GraphicsWindow, win), mouse_watcher);
+    mouse.initialize();
+	
     create_3d_render();
     create_2d_render();
     create_axis_grid();
     create_default_scene();
 
     // scene camera needs some references not available at time of its creation,
-    // so we set them now.
-    scene_cam.initialize(this);
+    // so we init them now.
+    scene_cam.initialize();
 
     // reset everything,
     scene_cam.reset();
@@ -60,7 +64,6 @@ void Engine::create_3d_render() {
 
     mouse_watcher->set_display_region(dr);
 
-    scene_cam = SceneCam();
     scene_cam.reparent_to(render);
 
     dr->set_camera(scene_cam);
@@ -113,8 +116,8 @@ void Engine::create_default_scene() {}
 
 void Engine::create_axis_grid() {
 
-    axisGrid = AxisGrid();
-    axisGrid.create(100, 10, 2);
+    axisGrid = AxisGrid(100, 10, 2);
+    axisGrid.create();
     axisGrid.set_light_off();
     axisGrid.reparent_to(render);
 }
@@ -136,7 +139,6 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
     NodePath mk_node           = data_root.attach_new_node(mouse_and_keyboard);
     NodePath mouse_watcher_np  = mk_node.attach_new_node(mouse_watcher);
 	NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
-	// DCAST(ButtonThrower, button_thrower_np.node())->set_prefix("");
 
     if (win->get_side_by_side_stereo()) {
         mouse_watcher->set_display_region(win->get_overlay_display_region());
@@ -335,8 +337,10 @@ void Engine::dispatch_events(bool ignore_mouse) {
 		if(ignore_mouse && event->get_name().substr(0, 5) == "mouse")
 			continue;
 
-		if (event_map.find(event->get_name()) != event_map.end()) {
-			for (auto event_it = event_map[event->get_name()].begin(); event_it != event_map[event->get_name()].end(); ++event_it) {
+		if (event_map.find(event->get_name()) != event_map.end())
+		{
+			for (auto event_it = event_map[event->get_name()].begin(); event_it != event_map[event->get_name()].end(); ++event_it)
+			{
 				event_it->callable(event_it->optional_params);
 			}
 		}

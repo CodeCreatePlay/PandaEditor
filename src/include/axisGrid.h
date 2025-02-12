@@ -2,27 +2,30 @@
 #define THREE_AXIS_GRID_H
 
 #include <lvector4.h>
-#include <geomNode.h>
-#include <geom.h>
-#include <geomVertexFormat.h>
-#include <geomVertexData.h>
-#include <geomVertexWriter.h>
-#include <geomLinestrips.h>
+#include <vector>
 #include <nodePath.h>
 #include <lineSegs.h>
 
+// Forward declarations
+class GeomNode;
 
 class AxisGrid : public NodePath {
 public:
-    AxisGrid();
-    void create(float size, float grid_step, int sub_divisions);
-
+    AxisGrid(float grid_size = 100, float grid_step = 10, int sub_divisions = 10);
+	
+    void create();
+    
 private:
+    void _draw_grid_lines(float step, LineSegs& line_seg);
+    void _draw_axis(const std::string& axis, LineSegs& line_seg);
+    void _attach_lines(LineSegs& line_seg);
+    std::vector<float> _frange(float start, float stop, float step);
+
     float grid_size;
     float grid_step;
     int sub_divisions;
 
-    bool show_end_cape_lines;
+    bool show_end_cap_lines;
 
     LVecBase4 x_axis_color;
     LVecBase4 y_axis_color;
@@ -33,15 +36,9 @@ private:
     float grid_thickness;
     float sub_div_thickness;
 
-    PT(GeomNode) axisLinesNode;
-    PT(GeomNode) gridLinesNode;
-    PT(GeomNode) subdivLinesNode;
-
-    LineSegs axisLines;
-    LineSegs gridLines;
-    LineSegs subdivision_Lines;
-
-    std::vector<float> myfrange(float start, float stop, float step);
+    LineSegs axis_lines;
+    LineSegs grid_lines;
+    LineSegs sub_division_lines;
 };
 
 #endif // THREE_AXIS_GRID_H

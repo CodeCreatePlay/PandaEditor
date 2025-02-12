@@ -14,8 +14,8 @@ public:
 	std::vector<NodePath> get_selected_nps();
 
 private:
-	void on_mouse(std::vector<void*>& params);
-	void on_mouse_up(std::vector<void*>& params);
+	void on_mouse();
+	void on_mouse_up();
 
 	Demon*      demon;
 	MousePicker mouse_picker;

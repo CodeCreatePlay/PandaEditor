@@ -2,34 +2,41 @@
 #define MOUSE_H
 
 #include <unordered_map>
+#include <vector>
 #include <string>
 
-#include <graphicsWindow.h>
-#include <mouseWatcher.h>
 
+class Engine;
 
 class Mouse {
 public:
-    Mouse();
-    Mouse(GraphicsWindow* win, MouseWatcher* mwn);
-
+    Mouse(Engine& engine);
+	void initialize();
     void update();
-	
-    const float get_dx() const;
-    const float get_dy() const;
-    const float get_x()  const;
-    const float get_y()  const;
+    void set_modifier(int index);
+    void clear_modifier(int index);
+    bool has_modifier(int modifier) const;
+    bool is_button_down(const std::string& buttonName) const;
+    bool has_mouse() const;
+
+    // Getters
+    float get_dx() const;
+    float get_dy() const;
+    float get_x() const;
+    float get_y() const;
+    const std::unordered_map<std::string, bool>& get_mouse_buttons() const;
 
 private:
-    GraphicsWindow* win;
-    MouseWatcher* mwn;
-
-    float x;  // mouse pos x
-    float y;  // mouse pos y
-    float dx; // mouse displacement x since last frame
-    float dy; // mouse displacement y since last frame
+    float x;
+    float y;
 	
-    MouseData mData; // mouse position from GraphicsWindow
+    float dx;
+    float dy;
+	
+	Engine& engine;
+    MouseData* mData;
+    std::unordered_map<std::string, bool> mouse_buttons;
+    std::vector<int> modifiers;
 };
 
 #endif // MOUSE_H

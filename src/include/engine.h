@@ -16,6 +16,7 @@
 #include <graphicsPipeSelection.h>
 #include <graphicsEngine.h>
 // camera and lenses
+#include <camera.h>
 #include <orthographicLens.h>
 // Input and Event-Handling headers
 #include <mouseWatcher.h>
@@ -36,6 +37,9 @@
 #include "resourceManager.h"
 #include "mouse.h"
 
+
+extern int MOUSE_ALT;
+extern int MOUSE_CTRL;
 
 class Engine {
 public:

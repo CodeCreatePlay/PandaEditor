@@ -1,33 +1,80 @@
+#include <algorithm>
+#include <graphicsWindow.h>
+#include <mouseWatcher.h>
+#include <mouseButton.h>
+#include <keyboardButton.h>
+#include "engine.h"
 #include "mouse.h"
 
 
-Mouse::Mouse() : x(0), y(0), dx(0), dy(0) {}
+Mouse::Mouse(Engine& engine) : engine(engine), mData(nullptr) {}
 
-Mouse::Mouse(GraphicsWindow* win, MouseWatcher* mwn)
-    : win(win), mwn(mwn), x(0), y(0), dx(0), dy(0) {
-        
-    mData = win->get_pointer(0);
+void Mouse::initialize()
+{
+	engine.add_event_hook( "alt",        [this](std::vector<void*>& params) { this->set_modifier(MOUSE_ALT);    }, {} );
+	engine.add_event_hook( "alt-up",     [this](std::vector<void*>& params) { this->clear_modifier(MOUSE_ALT);  }, {} );
+	engine.add_event_hook( "control",    [this](std::vector<void*>& params) { this->set_modifier(MOUSE_CTRL);   }, {} );
+	engine.add_event_hook( "control-up", [this](std::vector<void*>& params) { this->clear_modifier(MOUSE_CTRL); }, {} );
+	
+	// Initialize mouse button states
+    mouse_buttons[MouseButton::one().get_name()]   = false;
+    mouse_buttons[MouseButton::two().get_name()]   = false;
+    mouse_buttons[MouseButton::three().get_name()] = false;
+    mouse_buttons[MouseButton::four().get_name()]  = false;
+    mouse_buttons[MouseButton::five().get_name()]  = false;
 }
 
-void Mouse::update() {
-    if (!mwn->has_mouse()) {
+void Mouse::update()
+{
+    if (!engine.mouse_watcher->has_mouse())
         return;
-    }
+
+    for (auto& btn : mouse_buttons)
+        mouse_buttons[btn.first] = engine.mouse_watcher->is_button_down(btn.first);
 
     // Get pointer from screen, calculate delta
-    mData = win->get_pointer(0);
-
-    dx = x - mData.get_x();
-    dy = y - mData.get_y();
-
-    x = mData.get_x();
-    y = mData.get_y();
-
-    // Uncomment for debug output
-    // std::cout << "dx: " << dx << " dy: " << dy << " x: " << x << " y: " << y << std::endl;
+    mData = &engine.win->get_pointer(0);
+    
+    dx = x - mData->get_x();
+    dy = y - mData->get_y();
+    
+    x = mData->get_x();
+    y = mData->get_y();
 }
 
-const float Mouse::get_dx() const { return dx; }
-const float Mouse::get_dy() const { return dy; }
-const float Mouse::get_x()  const { return x; }
-const float Mouse::get_y()  const { return y; }
+void Mouse::set_modifier(int index)
+{
+    if (std::find(modifiers.begin(), modifiers.end(), index) == modifiers.end())
+	{
+        modifiers.push_back(index);
+    }
+}
+
+void Mouse::clear_modifier(int index)
+{
+    modifiers.erase(std::remove(modifiers.begin(), modifiers.end(), index), modifiers.end());
+}
+
+bool Mouse::has_modifier(int index) const
+{
+    return std::find(modifiers.begin(), modifiers.end(), index) != modifiers.end();
+}
+
+bool Mouse::is_button_down(const std::string& buttonName) const
+{
+    auto it = mouse_buttons.find(buttonName);
+    return (it != mouse_buttons.end()) ? it->second : false;
+}
+
+bool Mouse::has_mouse() const
+{
+    return engine.mouse_watcher->has_mouse();
+}
+
+float Mouse::get_dx() const { return dx; }
+float Mouse::get_dy() const { return dy; }
+
+float Mouse::get_x() const { return x; }
+float Mouse::get_y() const { return y; }
+
+const std::unordered_map<std::string, bool>& Mouse::get_mouse_buttons() const { return mouse_buttons; }

@@ -32,7 +32,6 @@ public:
           character_controller(ralph),
           character_collision_handler(ralph, c_trav)
 	{
-		
         camera = demon.game.main_cam;
 
         load_world();

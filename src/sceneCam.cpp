@@ -1,161 +1,132 @@
-#include "include/sceneCam.h"
-#include "include/engine.h"
+#include <lVecBase3.h>
+#include <lVecBase2.h>
+#include <lQuaternion.h>
+#include <camera.h>
+#include <perspectiveLens.h>
+#include <lineSegs.h>
+#include <clockObject.h>
+
+#include "sceneCam.h"
+#include "engine.h"
 
 
-SceneCam::SceneCam(float speed, const LVecBase3f& default_pos)
-    : speed(speed), default_pos(default_pos) {
-    axes = nullptr;
+SceneCam::SceneCam(Engine& engine, float speed, const LVecBase3f& default_pos)
+    : engine(engine), speed(speed), default_pos(default_pos), tempSpeed(0.0f) {
 
-    // Create a new camera
+    // Create camera
     PT(Camera) cam_node = new Camera("SceneCamera");
     cam_np = NodePath(cam_node);
 
-    // Create a lens for the camera
+    // Create and configure lens
     PT(PerspectiveLens) lens = new PerspectiveLens();
     lens->set_fov(60);
     lens->set_aspect_ratio(800.0f / 600.0f);
     cam_node->set_lens(lens);
 
-    // Initialize the NodePath with the camera
+    // Initialize the NodePath
     NodePath::operator=(cam_np);
 
-    // Create a target to orbit around
-    target = new NodePath("TargetNode");
+    // Create the target
+    target = NodePath("TargetNode");
 }
 
-NodePath* SceneCam::create_axes(float thickness, float length) {
-    // Build line segments
+NodePath SceneCam::create_axes(float thickness, float length) {
     LineSegs ls;
     ls.set_thickness(thickness);
 
-    // X Axis - Red
-    ls.set_color(1.0f, 0.0f, 0.0f, 1.0f);
-    ls.move_to(0.0f, 0.0f, 0.0f);
-    ls.draw_to(length, 0.0f, 0.0f);
+    // Define axis colors
+    struct { float r, g, b; } colors[] = {
+        {1.0f, 0.0f, 0.0f}, // X - Red
+        {0.0f, 1.0f, 0.0f}, // Y - Green
+        {0.0f, 0.0f, 1.0f}  // Z - Blue
+    };
 
-    // Y Axis - Green
-    ls.set_color(0.0f, 1.0f, 0.0f, 1.0f);
-    ls.move_to(0.0f, 0.0f, 0.0f);
-    ls.draw_to(0.0f, length, 0.0f);
+    // Draw X, Y, Z axes
+    for (int i = 0; i < 3; ++i) {
+        ls.set_color(colors[i].r, colors[i].g, colors[i].b, 1.0f);
+        ls.move_to(0.0f, 0.0f, 0.0f);
+        LVecBase3f dir(length * (i == 0), length * (i == 1), length * (i == 2));
+        ls.draw_to(dir);
+    }
 
-    // Z Axis - Blue
-    ls.set_color(0.0f, 0.0f, 1.0f, 1.0f);
-    ls.move_to(0.0f, 0.0f, 0.0f);
-    ls.draw_to(0.0f, 0.0f, length);
-
-    return new NodePath(ls.create());
+    return NodePath(ls.create());
 }
 
-void SceneCam::initialize(Engine* engine) {
-    win = DCAST(GraphicsWindow, engine->win);
-    mwn = engine->mouse_watcher;
-	mouse = &engine->mouse;
-    aspect2d = &engine->aspect2d;
-
+void SceneCam::initialize() {
     axes = create_axes();
-    axes->set_name("SceneCameraAxes");
-    axes->reparent_to(*aspect2d);
-    axes->set_scale(0.008f);
+    axes.set_name("SceneCameraAxes");
+    axes.reparent_to(engine.aspect2d);
+    axes.set_scale(0.008f);
 }
 
 void SceneCam::move(const LVecBase3f& move_vec) {
-    // Modify the move vector by the distance to the target
-    LVecBase3f camera_vec = get_pos() - target->get_pos();
+    LVecBase3f camera_vec = get_pos() - target.get_pos();
     LVecBase3f modified_move_vec = move_vec * (camera_vec.length() / 300.0f);
 
     set_pos(*this, modified_move_vec);
-
-    // Move the target so it stays with the camera
-    target->set_quat(get_quat());
+    target.set_quat(get_quat());
 
     LVecBase3f target_move_vec(modified_move_vec.get_x(), 0, modified_move_vec.get_z());
-    target->set_pos(*target, target_move_vec);
+    target.set_pos(target, target_move_vec);
 }
 
 void SceneCam::orbit(const LVecBase2f& delta) {
-    // Get new hpr
     LVecBase3f hpr = get_hpr();
     hpr.set_x(hpr.get_x() + delta.get_x());
     hpr.set_y(hpr.get_y() + delta.get_y());
-
-    // Set camera to new hpr
     set_hpr(hpr);
 
-    // Get the H and P in radians
     float rad_x = hpr.get_x() * (M_PI / 180.0f);
     float rad_y = hpr.get_y() * (M_PI / 180.0f);
-
-    // Get distance from camera to target
-    LVecBase3f camera_vec = get_pos() - target->get_pos();
+    
+    LVecBase3f camera_vec = get_pos() - target.get_pos();
     float cam_vec_dist = camera_vec.length();
 
-    // Get new camera pos
-    LVecBase3f new_pos;
-    new_pos.set_x(cam_vec_dist * sin(rad_x) * cos(rad_y));
-    new_pos.set_y(-cam_vec_dist * cos(rad_x) * cos(rad_y));
-    new_pos.set_z(-cam_vec_dist * sin(rad_y));
-    new_pos += target->get_pos();
+    LVecBase3f new_pos = target.get_pos() + LVecBase3f(
+        cam_vec_dist * sin(rad_x) * cos(rad_y),
+        -cam_vec_dist * cos(rad_x) * cos(rad_y),
+        -cam_vec_dist * sin(rad_y)
+    );
 
-    // Set camera to new pos
     set_pos(new_pos);
 }
 
 void SceneCam::update() {
-	
-    if (!mwn->has_mouse() ||
-        !mwn->is_button_down(KeyboardButton::alt())) {
+    if (!engine.mouse.has_mouse() || !engine.mouse.has_modifier(MOUSE_ALT))
         return;
-    }
-	
-    // Get delta time
+
     tempSpeed = speed * ClockObject::get_global_clock()->get_dt();
 
-    // Orbit - If left input down
-    if (mwn->is_button_down(MouseButton::one()))
-        orbit(LVecBase2f(mouse->get_dx() * tempSpeed, mouse->get_dy() * tempSpeed));
-    
-    // Dolly - If middle input down
-    else if (mwn->is_button_down(MouseButton::two())) {
-        move(LVecBase3f(mouse->get_dx() * tempSpeed, 0, -mouse->get_dy() * tempSpeed));
+    if (engine.mouse.is_button_down("mouse1")) {
+        orbit(LVecBase2f(engine.mouse.get_dx() * tempSpeed, engine.mouse.get_dy() * tempSpeed));
+    } else if (engine.mouse.is_button_down("mouse2")) {
+        move(LVecBase3f(engine.mouse.get_dx() * tempSpeed, 0, -engine.mouse.get_dy() * tempSpeed));
+    } else if (engine.mouse.is_button_down("mouse3")) {
+        move(LVecBase3f(0, -engine.mouse.get_dx() * tempSpeed, 0));
     }
 
-    // Zoom - If right input down
-    else if (mwn->is_button_down(MouseButton::three())) {
-        move(LVecBase3f(0, -mouse->get_dx() * tempSpeed, 0));
-    }
-    
     update_axes();
 }
 
 void SceneCam::update_axes() {
-    // Set rotation to inverse of camera rotation
-    float aspect = static_cast<float>(win->get_sbs_left_x_size()) / static_cast<float>(win->get_sbs_left_y_size());
-    axes->set_pos(aspect - 0.25f, 0.0f, 1.0f - 0.25f);
-
+    axes.set_pos(engine.get_aspect_ratio() - 0.25f, 0.0f, 1.0f - 0.25f);
     LQuaternion camera_quat(get_quat());
     camera_quat.invert_in_place();
-
-    axes->set_quat(camera_quat);
+    axes.set_quat(camera_quat);
 }
 
 void SceneCam::reset() {
-    // Reset camera and target back to default positions
-    target->set_pos(LVecBase3f(0, 0, 0));
+    target.set_pos(LVecBase3f(0, 0, 0));
     set_pos(default_pos);
-
-    // Set camera to look at target
-    look_at(target->get_pos());
-    target->set_quat(get_quat());
-
+    look_at(target.get_pos());
+    target.set_quat(get_quat());
     update_axes();
 }
 
 void SceneCam::on_resize_event(float aspect_ratio) {
-    Lens* lens = DCAST(Camera, cam_np.node())->get_lens();
-
+    auto lens = DCAST(PerspectiveLens, DCAST(Camera, cam_np.node())->get_lens());
     if (lens) {
-        DCAST(PerspectiveLens, lens)->set_aspect_ratio(aspect_ratio);
+        lens->set_aspect_ratio(aspect_ratio);
     }
-
     update_axes();
 }
