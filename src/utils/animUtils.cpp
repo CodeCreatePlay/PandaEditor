@@ -1,4 +1,9 @@
-#include "include/animUtils.h"
+#include <nodePath.h>
+#include <animControlCollection.h>
+#include <character.h>
+#include <animBundleNode.h>
+#include <partBundle.h>
+#include "animUtils.h"
 
 
 // Bind animations that are children of the character NodePath

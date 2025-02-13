@@ -11,10 +11,10 @@ Mouse::Mouse(Engine& engine) : engine(engine), mData(nullptr) {}
 
 void Mouse::initialize()
 {
-	engine.add_event_hook( "alt",        [this](std::vector<void*>& params) { this->set_modifier(MOUSE_ALT);    }, {} );
-	engine.add_event_hook( "alt-up",     [this](std::vector<void*>& params) { this->clear_modifier(MOUSE_ALT);  }, {} );
-	engine.add_event_hook( "control",    [this](std::vector<void*>& params) { this->set_modifier(MOUSE_CTRL);   }, {} );
-	engine.add_event_hook( "control-up", [this](std::vector<void*>& params) { this->clear_modifier(MOUSE_CTRL); }, {} );
+	engine.accept("alt",        [this]() { this->set_modifier(MOUSE_ALT);    });
+	engine.accept("alt-up",     [this]() { this->clear_modifier(MOUSE_ALT);  });
+	engine.accept("control",    [this]() { this->set_modifier(MOUSE_CTRL);   });
+	engine.accept("control-up", [this]() { this->clear_modifier(MOUSE_CTRL); });
 	
 	// Initialize mouse button states
     mouse_buttons[MouseButton::one().get_name()]   = false;

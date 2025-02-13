@@ -3,7 +3,6 @@
 
 #include "p3d_Imgui.hpp"
 
-
 class MouseWatcher;
 class DisplayRegion;
 class ButtonThrower;
@@ -12,26 +11,25 @@ class Demon;
 
 class Game {
 public:
-    explicit Game(Demon* demon);
+    explicit Game(Demon& demon);
     void init();
-    void on_evt(const Event* evt, const std::vector<void*>& params);
+    void on_evt(const std::string& event_name); // Pass string by const reference
 	
-	NodePath render;
-    NodePath render2D;
-	NodePath aspect2D;
-	NodePath pixel2D;
-	
-	NodePath main_cam;
-	NodePath cam2D;
-
-    DisplayRegion* dr3D;
-    DisplayRegion* dr2D;
-	
-	Panda3DImGui p3d_imgui;
-	MouseWatcher* mouse_watcher;
+    NodePath          render;
+    NodePath          render2D;
+    NodePath          aspect2D;
+    NodePath          pixel2D;
+    NodePath          main_cam;
+    NodePath          cam2D;
+    
+    PT(DisplayRegion) dr3D;
+    PT(DisplayRegion) dr2D;
+    PT(MouseWatcher)  mouse_watcher;
+    
+    Panda3DImGui      p3d_imgui;
 
 private:
-	Demon* demon;
+    Demon& demon;
 
     void create_dr2D();
     void create_dr3D();

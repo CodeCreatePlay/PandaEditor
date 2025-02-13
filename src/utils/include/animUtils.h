@@ -1,10 +1,3 @@
-#include <nodePath.h>
-
-#include <animControlCollection.h>
-#include <character.h>
-#include <animBundleNode.h>
-#include <partBundle.h>
-
 
 class AnimUtils {
 public:

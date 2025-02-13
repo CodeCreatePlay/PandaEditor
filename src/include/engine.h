@@ -43,74 +43,52 @@ extern int MOUSE_CTRL;
 
 class Engine {
 public:
-	using Callable = std::function<void(std::vector<void*>&)>;
-	struct EventObj {
-		public:
-			Callable callable;
-			std::vector<void*> optional_params;
-			
-			EventObj(Callable callable) {
-				this->callable = callable;
-			}
-			
-			EventObj(Callable callable, std::vector<void*> optional_params) {
-				this->callable = callable;
-				this->optional_params = optional_params;
-			}
-	};
-	
-	using EventMap = std::unordered_map<std::string, std::vector<EventObj>>;
-
     Engine();
     ~Engine();
 
     // fields
-    GraphicsEngine*  engine;
-    PT(GraphicsPipe) pipe;
-    GraphicsWindow*  win = nullptr;
-    DisplayRegion*   dr;
-	
-    DisplayRegion* dr2d;
-    MouseWatcher* mouse_watcher_2d;
+	PT(GraphicsPipe)      pipe;
+    PT(GraphicsEngine)    engine;
+    PT(GraphicsWindow)    win;
+    PT(DisplayRegion)     dr;
+    PT(DisplayRegion)     dr2d;
 
-    MouseWatcher* mouse_watcher = nullptr;
+    PT(MouseWatcher)      mouse_watcher;
+	
     std::vector<NodePath> mouse_watchers;
 	std::vector<NodePath> button_throwers;
 
-    NodePath data_root;
-    DataGraphTraverser data_graph_trav;
-    EventQueue* event_queue;
-    EventHandler* event_handler;
+    NodePath              data_root;
+    DataGraphTraverser    data_graph_trav;
+    EventQueue*           event_queue;
+    EventHandler*         event_handler;
 
-    NodePath render;
-    SceneCam scene_cam;
-    NodePath render2d;
-    NodePath aspect2d;
-    NodePath pixel2d;
-    NodePath cam2d;
+    NodePath              render;
+    SceneCam              scene_cam;
+    NodePath              render2d;
+    NodePath              aspect2d;
+    NodePath              pixel2d;
+    NodePath              cam2d;
 
-    Mouse mouse;
-    ResourceManager resourceManager;
-    AxisGrid axisGrid;
+    Mouse                 mouse;
+    ResourceManager       resourceManager;
+    AxisGrid              axisGrid;
 	
-	EventMap event_map;
+	std::unordered_map<std::string, std::vector<std::function<void()>>> event_map;
+    std::vector<std::function<void(std::string event_name)>>            unnamed_events;
+	
+    bool should_repaint;
 	
     // methods
-	void update();
+	void accept(const std::string& event_name, std::function<void()> callback);
+    void accept(std::function<void(std::string event_name)> callback);
 	void clean_up();
-	
-	void add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook);
-	void add_event_hook(std::string evt_name, Callable callback, std::vector<void*> optional_params = {});
-	
-	void remove_event_hook(int key);
-	void remove_event_hook(std::string evt_name);
-	
 	void dispatch_event(std::string evt_name);
 	void dispatch_events(bool ignore_mouse = false);
-
 	void on_evt_size();
-	
-	bool should_repaint;
+	void trigger(const std::string& event_name);
+	void update();
+
 	float get_aspect_ratio();
     LVecBase2i get_size();
 	
@@ -120,13 +98,10 @@ private:
     void create_2d_render();
     void create_default_scene();
     void create_axis_grid();
-	void setup_mouse_keyboard(MouseWatcher*& mw);
-	
 	void process_events(CPT_Event event);
 	void reset_clock();
-	
-	std::unordered_map<int, std::function<void(const Event*, const std::vector<void*>&)>> evt_hooks;
-	
+	void setup_mouse_keyboard(PT(MouseWatcher)& mw);
+		
 	// cache
 	std::vector<std::pair<CPT_Event, std::vector<void*>>> panda_events;
 };

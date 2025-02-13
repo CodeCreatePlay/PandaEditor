@@ -9,7 +9,7 @@ class Demon;
 
 class LevelEditor {
 public:
-    LevelEditor(Demon *demon);
+    LevelEditor(Demon& demon);
 	void init();
 	std::vector<NodePath> get_selected_nps();
 
@@ -17,7 +17,7 @@ private:
 	void on_mouse();
 	void on_mouse_up();
 
-	Demon*      demon;
+	Demon&      demon;
 	MousePicker mouse_picker;
 	Marquee     marquee;
 	

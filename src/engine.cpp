@@ -76,7 +76,6 @@ void Engine::create_2d_render() {
     dr2d->set_active(true);
 
     render2d = NodePath("Render2d");
-	// render2d.set_shader_auto(true);
 	render2d.set_depth_test(false);
     render2d.set_depth_write(false);
 
@@ -122,23 +121,22 @@ void Engine::create_axis_grid() {
     axisGrid.reparent_to(render);
 }
 
-void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
-
+void Engine::setup_mouse_keyboard(PT(MouseWatcher)& mw) {
     if (!win->is_of_type(GraphicsWindow::get_class_type()) &&
         DCAST(GraphicsWindow, win)->get_num_input_devices() > 0)
         return;
 
     GraphicsWindow *window = DCAST(GraphicsWindow, win);
 	
-	int decive_idx = data_root.get_num_children();
+    int device_idx = data_root.get_num_children();
 	
-    MouseAndKeyboard* mouse_and_keyboard = new MouseAndKeyboard(window, decive_idx, win->get_input_device_name(decive_idx));
-	MouseWatcher*     mouse_watcher      = new MouseWatcher("MouseWatcher");
-	ButtonThrower*    button_thrower     = new ButtonThrower("Button_Thrower");
+    PT(MouseAndKeyboard) mouse_and_keyboard = new MouseAndKeyboard(window, device_idx, win->get_input_device_name(device_idx));
+    PT(MouseWatcher) mouse_watcher = new MouseWatcher("MouseWatcher");
+    PT(ButtonThrower) button_thrower = new ButtonThrower("Button_Thrower");
 		
-    NodePath mk_node           = data_root.attach_new_node(mouse_and_keyboard);
-    NodePath mouse_watcher_np  = mk_node.attach_new_node(mouse_watcher);
-	NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
+    NodePath mk_node = data_root.attach_new_node(mouse_and_keyboard);
+    NodePath mouse_watcher_np = mk_node.attach_new_node(mouse_watcher);
+    NodePath button_thrower_np = mouse_watcher_np.attach_new_node(button_thrower);
 
     if (win->get_side_by_side_stereo()) {
         mouse_watcher->set_display_region(win->get_overlay_display_region());
@@ -159,9 +157,10 @@ void Engine::setup_mouse_keyboard(MouseWatcher*& mw) {
     button_thrower->set_modifier_buttons(mods);
 
     mouse_watchers.push_back(mouse_watcher_np);
-	button_throwers.push_back(button_thrower_np);
+    button_throwers.push_back(button_thrower_np);
 
-	mw = mouse_watcher;
+    // Assign the reference-counted MouseWatcher to mw
+    mw = mouse_watcher;
 }
 
 void Engine::process_events(CPT_Event event) {
@@ -219,7 +218,6 @@ void Engine::update() {
 }
 
 void Engine::on_evt_size() {
-
     float aspect_ratio = get_aspect_ratio();
     if (aspect_ratio == 0)
         return;
@@ -275,92 +273,55 @@ void Engine::clean_up() {
     // engine->remove_all_windows();
 }
 
-void Engine::add_event_hook(int key, std::function<void(const Event*, const std::vector<void*>&)> hook) {
-
-    auto result = evt_hooks.emplace(key, hook);
-    if (!result.second) {
-        std::ostringstream message;
-        message << "Unable to set event hook, Key: " << key << " already exists! Available keys: ";
-
-        // Standard loop (C++14 friendly)
-        for (auto it = evt_hooks.begin(); it != evt_hooks.end(); ++it) {
-            message << it->first << ", ";
-        }
-
-        std::string output = message.str();
-        if (!evt_hooks.empty()) {
-            output.pop_back();  // Remove last space
-            output.pop_back();  // Remove last comma
-        }
-
-        std::cout << output << std::endl;
-    }
+void Engine::accept(const std::string& event_name, std::function<void()> callback) {
+	event_map[event_name].push_back(callback);
 }
 
-void Engine::remove_event_hook(int key) {
-	
-	if (evt_hooks.find(key) == evt_hooks.end()) {
-		evt_hooks.erase(key);
-    }
-	else {
-        std::cout << "Unable to remove event hook, Key: " << key << " does not exists!" << std::endl;
-    }
+void Engine::accept(std::function<void(std::string event_name)> callback) {
+	unnamed_events.push_back(callback);
 }
 
-void Engine::add_event_hook(std::string evt_name, Engine::Callable callback, std::vector<void*> optional_params) {
-	
-	Engine::event_map[evt_name].push_back(Engine::EventObj(callback, optional_params));
-}
-
-void Engine::dispatch_event(std::string evt_name) {
-	
-	if (event_map.find(evt_name) != event_map.end()) {
-		for (auto event_it = event_map[evt_name].begin(); event_it != event_map[evt_name].end(); ++event_it) {
-			event_it->callable(event_it->optional_params);
+void Engine::trigger(const std::string& event_name) {
+	if (event_map.find(event_name) != event_map.end()) {
+		for (auto& callback : event_map[event_name]) {
+			callback();
 		}
 	}
 }
 
-void Engine::dispatch_events(bool ignore_mouse) {
+void Engine::dispatch_event(std::string evt_name) {
+	Engine::trigger(evt_name);
+}
 
+void Engine::dispatch_events(bool ignore_mouse) {
 	const Event* event;
 	for (auto it = panda_events.begin(); it != panda_events.end(); ++it) {
 		
 		event = it->first.p();
 
 		// send raw event hooks
-		for(const auto& pair : evt_hooks) {
-			pair.second(event, it->second);
+		for (const auto& callback : unnamed_events) {
+			callback(event->get_name());  // Call the callback with the argument
 		}
-		
+
 		// other
 		if(ignore_mouse && event->get_name().substr(0, 5) == "mouse")
 			continue;
-
-		if (event_map.find(event->get_name()) != event_map.end())
-		{
-			for (auto event_it = event_map[event->get_name()].begin(); event_it != event_map[event->get_name()].end(); ++event_it)
-			{
-				event_it->callable(event_it->optional_params);
-			}
-		}
+		
+		// trigger named events
+		Engine::trigger(event->get_name());
 	}
 	
 	panda_events.clear();
 }
 
 float Engine::get_aspect_ratio() {
-
     return static_cast<float>(win->get_sbs_left_x_size()) / static_cast<float>(win->get_sbs_left_y_size());
 }
 
 LVecBase2i Engine::get_size() {
-
     if (win != nullptr) {
-
         if (DCAST(GraphicsWindow, win) && win->has_size()) {
-
-			// std::cout << "x size: " << win->get_sbs_left_x_size() << " y size: " << win->get_sbs_left_y_size() << std::endl;
 			return LVecBase2i(win->get_sbs_left_x_size(), win->get_sbs_left_y_size());
         }
     }

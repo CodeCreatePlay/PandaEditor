@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
 {
     Demon &demon = Demon::get_instance();
 	
-	demon.engine.add_event_hook("editor_imgui", [](std::vector<void*>& params){ on_imgui_new_frame(); }, {});
-	demon.engine.add_event_hook("game_imgui",   [](std::vector<void*>& params){ on_game_new_frame();  }, {});
+	demon.engine.accept("editor_imgui", on_imgui_new_frame );
+	demon.engine.accept("game_imgui",   on_game_new_frame  );
 	
     demon.start();
 		

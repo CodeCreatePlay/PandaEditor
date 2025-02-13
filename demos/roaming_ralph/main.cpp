@@ -55,11 +55,7 @@ public:
         register_keys();
 
 		// add an event hook to capture events sent by panda3D
-        demon.engine.add_event_hook(
-            1,
-            [this](const Event* evt, const std::vector<void*>& params)
-			{ this->on_evt(evt, params); }
-        );
+        demon.engine.accept( [this](std::string event_name) { this->on_evt(event_name); } );
 
 		// create an update task
         PT(GenericAsyncTask) my_task = new GenericAsyncTask(
@@ -153,11 +149,11 @@ private:
         event_map["q-up"] = {"cam-right", false};
     }
 
-    void on_evt(const Event* evt, const std::vector<void*>& params)
+    void on_evt(std::string event_name)
 	{
-        if (event_map.find(evt->get_name()) != event_map.end())
+        if (event_map.find(event_name) != event_map.end())
 		{
-            key_map[event_map[evt->get_name()].first] = event_map[evt->get_name()].second;
+            key_map[event_map[event_name].first] = event_map[event_name].second;
         }
     }
 };

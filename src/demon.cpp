@@ -10,8 +10,7 @@
 #include "imgui.h"
 
 
-Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
-	
+Demon::Demon() : game(*this), le(*this) {
 	// 1. Initialize
 	// init base editor
 	setup_paths();
@@ -21,7 +20,7 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	game.init();
 	init_imgui(&game.p3d_imgui, &game.pixel2D, game.mouse_watcher, "Game");
 	
-	// init_imgui_task();
+	// init level editor();
 	le.init();
 	
 	// 2. Setup game and editor viewport camera masks
@@ -72,7 +71,7 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
 	AsyncTaskManager::get_global_ptr()->add(update_task);
 	
 	// 4. event hooks
-	engine.add_event_hook("window-event", [this](std::vector<void*>& params) { engine.on_evt_size(); }, {});
+	engine.accept("window-event", [this]() { engine.on_evt_size(); } );
 
     // 5. Loop through all tasks in the task manager
     auto task_mgr = AsyncTaskManager::get_global_ptr();
@@ -81,6 +80,11 @@ Demon::Demon() : game(this), le(this), cleaned_up(false), is_game_mode(false) {
         PT(AsyncTask) task = tasks.get_task(i);
         std::cout << "Task " << i + 1 << ": " << task->get_name() << std::endl;
     }
+	
+	// Reset
+	cleaned_up    = false;
+	is_game_mode  = false;
+	mouse_over_ui = false;
 }
 
 Demon::~Demon() { 
@@ -182,22 +186,19 @@ void Demon::init_imgui(Panda3DImGui *panda3d_imgui, NodePath *parent, MouseWatch
 }
 
 void Demon::imgui_update() {
-	
 	// editor ui update
 	ImGui::SetCurrentContext(this->p3d_imgui.context_);
 	
 	if (this->p3d_imgui.should_repaint) {
-		
 		this->p3d_imgui.on_window_resized();
 		this->p3d_imgui.should_repaint = false;
 	}
 	
 	this->p3d_imgui.new_frame_imgui();
 	this->handle_imgui_mouse(this->engine.mouse_watcher, &this->p3d_imgui);
-		
-	for (auto event_it = engine.event_map["editor_imgui"].begin(); event_it != engine.event_map["editor_imgui"].end(); ++event_it)
-		event_it->callable(event_it->optional_params);
 	
+	engine.trigger("editor_imgui");
+
 	this->p3d_imgui.render_imgui();
 	if(ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
 	
@@ -205,16 +206,13 @@ void Demon::imgui_update() {
 	ImGui::SetCurrentContext(this->game.p3d_imgui.context_);
 	
 	if (this->game.p3d_imgui.should_repaint) {
-		
 		this->game.p3d_imgui.on_window_resized();
 		this->game.p3d_imgui.should_repaint = false;
 	}
 	
 	this->game.p3d_imgui.new_frame_imgui();
 	this->handle_imgui_mouse(this->game.mouse_watcher, &this->game.p3d_imgui);
-
-	for (auto event_it = engine.event_map["game_imgui"].begin(); event_it != engine.event_map["game_imgui"].end(); ++event_it)
-		event_it->callable(event_it->optional_params);
+	engine.trigger("game_imgui");
 
 	this->game.p3d_imgui.render_imgui();
 	if (ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
