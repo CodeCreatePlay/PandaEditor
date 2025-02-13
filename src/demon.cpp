@@ -4,9 +4,9 @@
 #include <nodePath.h>
 #include <bitMask.h>
 
-#include "pathUtils.h"
+#include "pathUtils.hpp"
 #include "taskUtils.hpp"
-#include "demon.h"
+#include "demon.hpp"
 #include "imgui.h"
 
 

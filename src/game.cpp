@@ -11,8 +11,8 @@
 #include <keyboardButton.h>
 #include <nodePath.h>
 
-#include "game.h"
-#include "demon.h"
+#include "game.hpp"
+#include "demon.hpp"
 
 // Constructor
 Game::Game(Demon& demon) : demon(demon) { }

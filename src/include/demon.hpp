@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "engine.h"
-#include "game.h"
+#include "engine.hpp"
+#include "game.hpp"
 #include "levelEditor.hpp"
 #include "p3d_Imgui.hpp"
 #include "constants.hpp"

@@ -1,9 +1,11 @@
 #include <nodePath.h>
-#include <animControlCollection.h>
+
 #include <character.h>
 #include <animBundleNode.h>
 #include <partBundle.h>
-#include "animUtils.h"
+#include <animControlCollection.h>
+
+#include "animUtils.hpp"
 
 
 // Bind animations that are children of the character NodePath

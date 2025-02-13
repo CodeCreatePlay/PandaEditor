@@ -1,8 +1,5 @@
-#include <iostream>
-#include <fstream>
-#include <sys/stat.h>
-#include "include/resourceManager.h"
-#include "utils/include/pathUtils.h"
+#include "resourceManager.hpp"
+#include "pathUtils.hpp"
 
 
 ResourceManager::ResourceManager() {
@@ -30,12 +27,6 @@ NodePath ResourceManager::load_model(
 	if(node)
 		result = NodePath(node);
 	return result;
-	
-	/*
-	std::string path_on_disk = PathUtils::join_paths(PathUtils::get_current_working_dir(), std::string("game/").append(path.c_str()));
-	path_on_disk = PathUtils::join_paths(PathUtils::get_current_working_dir(), path.c_str());
-	if (PathUtils::is_file(path_on_disk.c_str()))
-	*/
 }
 
 PT(Texture) ResourceManager::load_texture(const std::string& path, bool isCubeMap) {

@@ -6,8 +6,8 @@
 #include <lineSegs.h>
 #include <clockObject.h>
 
-#include "sceneCam.h"
-#include "engine.h"
+#include "sceneCam.hpp"
+#include "engine.hpp"
 
 
 SceneCam::SceneCam(Engine& engine, float speed, const LVecBase3f& default_pos)

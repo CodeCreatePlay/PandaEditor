@@ -1,5 +1,6 @@
-#include "axisGrid.h"
 #include <geomNode.h>
+#include "axisGrid.hpp"
+
 
 AxisGrid::AxisGrid(float grid_size, float grid_step, int sub_divisions)
     : NodePath("AxisGrid"),

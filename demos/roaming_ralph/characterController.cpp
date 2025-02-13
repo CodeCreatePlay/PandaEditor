@@ -4,8 +4,8 @@
 #include <nodePath.h>
 #include <animControlCollection.h>
 
-#include "demon.h"
-#include "animUtils.h"
+#include "demon.hpp"
+#include "animUtils.hpp"
 
 
 class CharacterController {

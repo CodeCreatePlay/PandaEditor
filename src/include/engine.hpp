@@ -32,10 +32,10 @@
 #include <asyncTaskManager.h>
 #include <genericAsyncTask.h>
 // other
-#include "sceneCam.h"
-#include "axisGrid.h"
-#include "resourceManager.h"
-#include "mouse.h"
+#include "sceneCam.hpp"
+#include "axisGrid.hpp"
+#include "resourceManager.hpp"
+#include "mouse.hpp"
 
 
 extern int MOUSE_ALT;

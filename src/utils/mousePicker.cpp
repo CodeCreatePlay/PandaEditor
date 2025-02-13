@@ -5,7 +5,7 @@
 #include <bitMask.h>
 #include <camera.h>
 #include <nodePath.h>
-#include "engine.h"
+#include "engine.hpp"
 #include "mousePicker.hpp"
 
 

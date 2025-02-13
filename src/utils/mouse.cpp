@@ -3,8 +3,8 @@
 #include <mouseWatcher.h>
 #include <mouseButton.h>
 #include <keyboardButton.h>
-#include "engine.h"
-#include "mouse.h"
+#include "engine.hpp"
+#include "mouse.hpp"
 
 
 Mouse::Mouse(Engine& engine) : engine(engine), mData(nullptr) {}

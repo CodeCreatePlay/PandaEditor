@@ -13,7 +13,7 @@
 #include <collisionHandlerQueue.h>
 #include <collideMask.h>
 
-#include "demon.h"
+#include "demon.hpp"
 
 #include "characterController.cpp"
 #include "characterCollisionHandler.cpp"
