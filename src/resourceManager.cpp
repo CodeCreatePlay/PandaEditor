@@ -1,3 +1,9 @@
+#include <loader.h>
+#include <loaderOptions.h>
+#include <nodePath.h>
+#include <texture.h>
+#include <texturePool.h>
+
 #include "resourceManager.hpp"
 #include "pathUtils.hpp"
 
@@ -23,7 +29,7 @@ NodePath ResourceManager::load_model(
 	
 	NodePath result;
 	
-	PT(PandaNode) node = _loader->load_sync(Filename(path), options);
+	PT(PandaNode) node = _loader->load_sync(PathUtils::to_engine_specific(path), options);
 	if(node)
 		result = NodePath(node);
 	return result;
@@ -32,7 +38,7 @@ NodePath ResourceManager::load_model(
 PT(Texture) ResourceManager::load_texture(const std::string& path, bool isCubeMap) {
 
 	LoaderOptions options = LoaderOptions();
-	return ResourceManager::load_texture(path, options, false, isCubeMap);
+	return ResourceManager::load_texture(PathUtils::to_engine_specific(path), options, false, isCubeMap);
 }
 
 PT(Texture) ResourceManager::load_texture(
@@ -41,15 +47,15 @@ PT(Texture) ResourceManager::load_texture(
 	bool isCubeMap) {
 
 	LoaderOptions options = LoaderOptions();
-	return ResourceManager::load_texture(path, options, readMipmaps, isCubeMap);
+	return ResourceManager::load_texture(PathUtils::to_engine_specific(path), options, readMipmaps, isCubeMap);
 }
 
 PT(Texture) ResourceManager::load_texture(
 	const std::string& path,
 	const LoaderOptions& options,
 	bool isCubeMap) {
-		
-	return ResourceManager::load_texture(path, options, false, isCubeMap);
+	std::cout << path;
+	return ResourceManager::load_texture(PathUtils::to_engine_specific(path), options, false, isCubeMap);
 }
 
 PT(Texture) ResourceManager::load_texture(
@@ -62,11 +68,11 @@ PT(Texture) ResourceManager::load_texture(
 
 		// Load a cube map texture
 		std::string texture_pattern = ""; // This should be set appropriately
-		return TexturePool::load_cube_map(Filename(texture_pattern), readMipmaps, options);
+		return TexturePool::load_cube_map(PathUtils::to_engine_specific(texture_pattern), readMipmaps, options);
 	}
 	else {
 		
-		return TexturePool::load_texture(Filename(path), 0, readMipmaps, options);
+		return TexturePool::load_texture(PathUtils::to_engine_specific(path), 0, readMipmaps, options);
 	}
 }
 
@@ -78,6 +84,6 @@ void ResourceManager::load_sound(const std::string& sound) {
     // Implement sound loading logic here
 }
 
-Loader* ResourceManager::get_loader() const {
+PT(Loader) ResourceManager::get_loader() const {
     return _loader;
 }

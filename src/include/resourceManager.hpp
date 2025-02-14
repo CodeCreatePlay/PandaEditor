@@ -5,27 +5,14 @@
 #include <string>
 #include <unordered_map>
 
-#include <filename.h>
-#include <nodePath.h>
-#include <texture.h>
-#include <texturePool.h>
-#include <loader.h>
-#include <loaderOptions.h>
 
+class NodePath;
+class Texture;
 
 class ResourceManager {
 public:
     ResourceManager();
 	
-	/*
-    NodePath load_model(
-        const std::string& path,
-		bool is_editor_resource, = false
-        const LoaderOptions& loader_options = LoaderOptions(),
-        bool use_cached = false,
-        bool instanced  = false);
-	*/
-
 	NodePath load_model(const std::string& path);
 
 	NodePath load_model(
@@ -53,10 +40,10 @@ public:
     void load_font(const std::string& font);
     void load_sound(const std::string& sound);
 
-    Loader* get_loader() const;
+    PT(Loader) get_loader() const;
 
 private:
-    Loader* _loader;
+    PT(Loader) _loader;
 };
 
 #endif // RESOURCE_HANDLER_H
