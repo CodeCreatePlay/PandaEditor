@@ -68,62 +68,8 @@ src/
 │   └── roaming-ralph         # Build output for Roaming Ralph demo
 ```
 
-### Boilerplate code explaination
-1. When you create a new project, some boilerplate code is automatically generated and added inside `main.cpp` file.  
-2. PandaEditor uses the Demon singleton class to set up and initialize the Panda3D game engine and editor environment. To start the editor, you need to:
-   - Get a reference to Demon.
-   - Call its start() method. 
-
-- **Basic example.**
-
-```
-#include "demon.h"
-
-int main(int argc, char* argv[]) {
-
-    // Create an instance of the Demon class
-    Demon &demon = Demon::get_instance();
-
-    /*your code goes here...*/
-
-    // Initialize and start the PandaEditor
-    demon.start();
-
-    // Exit the program
-    return 0;  
-}
-
-```
-
-- **Example code with `class`.**
-
-```
-#include "demon.h"
-
-class MyApp {
-public:
-    MyApp() : demon( Demon::get_instance() )
-    { 
-        // your code goes here...
-    }
-	
-    void start()
-    {
-	demon.start();
-    }
-
-
-    Demon &demon;
-};
-
-int main(int argc, char* argv[])
-{
-    MyApp app;
-    app.start();
-    return 0;
-}
-
-```
+### Getting started
+To get started take a look at the generated code when a new project is created, basically, all you need to do is get an instance of `Demon` class which will set up and initialize the Panda3D game engine and editor environment and call its `start` method. For further details and usage example refer to the included `demo` projects.
 
 ### Common Issues
 - **Panda3D Library Not Found**
