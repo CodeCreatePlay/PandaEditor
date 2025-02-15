@@ -1,46 +1,41 @@
 #include <unordered_map>
 
-#include <clockObject.h>
 #include <nodePath.h>
 #include <animControlCollection.h>
 
 #include "demon.hpp"
 #include "animUtils.hpp"
 
-
 class CharacterController {
 public:
     CharacterController(NodePath& character)
-	  : character(character)
-	{
-		global_clock = ClockObject::get_global_clock();
-	}
+	  : character(character), is_moving(false)
+	{}
     
-	void load_anims(std::string assets_path)
+	void init(const std::vector<NodePath>& anims)
 	{
-		Demon& demon = Demon::get_instance();
-		
-		// load animation
-		NodePath walk_anim = demon.engine.resourceManager.load_model(assets_path + "/ralph-run.egg.pz");
-		
 		// Bind the animation to the character
-		AnimUtils::bind_anims(character, walk_anim, animator);
+		for (const NodePath& anim : anims) {
+			AnimUtils::bind_anims(character, anim, animator);
+		}
 	}
 	
-    void update(const std::unordered_map<std::string, bool>& key_map)
+    void update(float dt, const std::unordered_map<std::string, bool>& key_map)
 	{
-		float dt = global_clock->get_dt();
-
-		if (key_map.at("left"))
+		if (key_map.find("left") != key_map.end() && key_map.at("left"))
 			character.set_h(character.get_h() + 300 * dt);
 		
-		if (key_map.at("right"))
+		if (key_map.find("right") != key_map.end() && key_map.at("right"))
 			character.set_h(character.get_h() - 300 * dt);
 		
-		if (key_map.at("forward"))
+		if (key_map.find("forward") != key_map.end() && key_map.at("forward"))
 			character.set_y(character, -25 * dt);
 
-		if (key_map.at("forward") || key_map.at("left") || key_map.at("right"))
+		bool moving = key_map.find("forward") != key_map.end() && key_map.at("forward") ||
+		              key_map.find("left") != key_map.end() && key_map.at("left") ||
+		              key_map.find("right") != key_map.end() && key_map.at("right");
+
+		if (moving)
 		{
 			if (!is_moving)
 			{
@@ -60,10 +55,7 @@ public:
 	}
 
 private:
-    NodePath& character;
+    NodePath&             character;
     AnimControlCollection animator;
-	
-    bool is_moving;
-	
-	PT(ClockObject) global_clock;
+	bool                  is_moving;
 };
