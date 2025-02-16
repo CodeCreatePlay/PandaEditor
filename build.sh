@@ -47,7 +47,7 @@ function download {
 
     if command -v curl &>/dev/null; then
         # echo "Downloading using curl..."
-        check_command_success_status curl --fail --silent --show-error --retry 3 --connect-timeout 10 --max-time 60 -# -L "$url" -o "$output"
+        check_command_success_status curl --fail --silent --show-error --retry 3 --connect-timeout 10 --max-time 360 -# -L "$url" -o "$output"
 
     elif command -v powershell &>/dev/null; then
         # echo "Downloading using PowerShell..."
@@ -66,7 +66,7 @@ function extract_zip {
     local destination="$2"
 
     if command -v unzip &>/dev/null; then
-        echo "Extracting using unzip..."
+        echo "Extracting using unzip."
         check_command_success_status unzip -q "$zip_file" -d "$destination"
 
     elif [[ "$OS_TYPE" == "Windows" ]]; then
@@ -94,25 +94,62 @@ function extract_zip {
 
 # Set Globals
 BUILD_TYPE="Release"
+
+BUILD_TOOLS_DIR="$(pwd)/build_tools"
 LOGGING_DIR="$(pwd)/logs"
 THIRDPARTY_DIR="$(pwd)/src/thirdparty"
 DEMO_PROJECTS_DIR="$(pwd)/demos"
 PROJECT_DIR="$(pwd)/game"
+
+MYCMAKE=""
+
 IMGUI_VERSION="v1.91.2"
 
 # ------------------------------------------------------------------ #
 # Ensure necessary directories, exist
-check_command_success_status mkdir -p "$LOGGING_DIR" "$THIRDPARTY_DIR" "$PROJECT_DIR"
+check_command_success_status mkdir -p "$LOGGING_DIR" "$THIRDPARTY_DIR" "$PROJECT_DIR" "$BUILD_TOOLS_DIR"
 
+# ------------------------------------------------------------------ #
+echo -e "PandaEditor Project Configuration and Build System.\n"
+echo -e "Getting dependencies.\n"
 
 # ------------------------------------------------------------------ #
 # Function to check configure CMake configuration file
-function configure_cmake_config_file
-{
-	local config_file="$1"
+function configure_cmake
+{	
+	# Check if cmake is setup correctly, otherwise download it
+	if [[ -z "$MYCMAKE" ]]; then
+		echo "Downloading CMake."
+		
+		# Download
+		url="https://github.com/Kitware/CMake/releases/download/v3.30.7/cmake-3.30.7-windows-x86_64.zip"
+		download "$url" "cmake.zip"
 
+		# Extract
+		echo "Extracting CMake."
+		extract_zip "cmake.zip" "$BUILD_TOOLS_DIR"
+
+		# Find extracted directory
+		extracted_dir=$(find "$BUILD_TOOLS_DIR" -maxdepth 1 -type d -name "cmake-*" | head -n 1)
+		if [[ -d "$extracted_dir" ]]; then
+			MYCMAKE="$extracted_dir/bin/cmake.exe"
+		else
+			echo -e "Error: Unable to find CMake.\n"
+			pause_if_interactive
+			exit 1
+		fi
+		
+		# Remove unnecessary files
+		echo "Cleaning up."
+		check_command_success_status rm cmake.zip
+
+		echo -e "CMake download completed successfully.\n"
+	fi
+
+	local config_file="$1"
+	
 	if [[ ! -f "$config_file" ]]; then
-		echo "Panda3D configuration file not found."
+		echo "CMake configuration file not found."
 
 		# Prompt user to input Panda3D installation path
 		echo "Please provide the path to Panda3D installation."
@@ -142,20 +179,19 @@ EOF
 	fi
 }
 
-check_dependency "cmake" # Ensure cmake exists
-configure_cmake_config_file "config.cmake"  # Create the CMake config file
+configure_cmake "config.cmake"  # Create the CMake config file
 
 # ------------------------------------------------------------------ #
 # Download and extract ImGui if not already present
 if [[ ! -d "$THIRDPARTY_DIR/imgui" ]]; then
-    echo "Downloading ImGui ($IMGUI_VERSION)..."
+    echo "Downloading ImGui ($IMGUI_VERSION)."
 
     # Download
 	url="https://github.com/ocornut/imgui/archive/refs/tags/$IMGUI_VERSION.zip"
 	download "$url" "imgui.zip"
 
 	# Extract
-    echo "Extracting ImGui..."
+    echo "Extracting ImGui."
 	extract_zip "imgui.zip" "$THIRDPARTY_DIR"
 
     # Find extracted directory dynamically
@@ -163,16 +199,16 @@ if [[ ! -d "$THIRDPARTY_DIR/imgui" ]]; then
     if [[ -d "$extracted_dir" ]]; then
         check_command_success_status mv "$extracted_dir" "$THIRDPARTY_DIR/imgui"
     else
-        echo "Error: ImGui extraction failed."
+        echo "Error: Unable to copy ImGUI to thirdparty/imgui folder."
         pause_if_interactive
         exit 1
     fi
 	
 	# Remove unnecessary files
-    echo "Cleaning up..."
+    echo "Cleaning up."
     check_command_success_status rm imgui.zip
 
-    echo -e "ImGui setup completed successfully.\n"
+    echo -e "ImGui download completed successfully.\n"
 fi
 
 
@@ -192,7 +228,6 @@ create_print_project_tree()
         ["builds"]="# Directory for build output"
     )
 
-    echo -e "PandaEditor Project Configuration and Build System\n"
     echo "src"
     
     local total_projects_count=0
@@ -462,14 +497,14 @@ function run_cmake_config {
     # Clear previous log and configure the project
     : > "$LOGGING_DIR"/build-log.log
     echo -e "Starting Configuration with CMake..." >> "$LOGGING_DIR"/build-log.log
-    log_cmake_output "$LOGGING_DIR"/build-log.log cmake -B"$BUILD_DIR" -S. $cmake_arch_option $project
+    log_cmake_output "$LOGGING_DIR"/build-log.log "$MYCMAKE" -B"$BUILD_DIR" -S. $cmake_arch_option $project
 }
 
 # Function to build project with CMake
 function run_cmake_build {
     # : > "$BUILD_DIR"/build-log.log
     echo -e "\n\nStarting Build..." >> "$LOGGING_DIR"/build-log.log
-    log_cmake_output "$LOGGING_DIR"/build-log.log cmake --build "$BUILD_DIR" --config Release
+    log_cmake_output "$LOGGING_DIR"/build-log.log "$MYCMAKE" --build "$BUILD_DIR" --config Release
 }
 
 
