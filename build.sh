@@ -66,7 +66,7 @@ function extract_zip {
     local destination="$2"
 
     if command -v unzip &>/dev/null; then
-        echo "Extracting using unzip."
+        # echo "Extracting using unzip."
         check_command_success_status unzip -q "$zip_file" -d "$destination"
 
     elif [[ "$OS_TYPE" == "Windows" ]]; then
@@ -101,17 +101,19 @@ THIRDPARTY_DIR="$(pwd)/src/thirdparty"
 DEMO_PROJECTS_DIR="$(pwd)/demos"
 PROJECT_DIR="$(pwd)/game"
 
-MYCMAKE=""
+MYCMAKE=$(which cmake)
+if [[ -z "$MYCMAKE" ]]; then
+	cmake_dir=$(find "$BUILD_TOOLS_DIR" -maxdepth 1 -type d -name "cmake-*" | head -n 1)
+    if [[ -d "$cmake_dir" && -f "$cmake_dir/bin/cmake.exe" ]]; then
+		MYCMAKE="$cmake_dir/bin/cmake.exe"
+	fi
+fi
 
 IMGUI_VERSION="v1.91.2"
 
 # ------------------------------------------------------------------ #
 # Ensure necessary directories, exist
 check_command_success_status mkdir -p "$LOGGING_DIR" "$THIRDPARTY_DIR" "$PROJECT_DIR" "$BUILD_TOOLS_DIR"
-
-# ------------------------------------------------------------------ #
-echo -e "PandaEditor Project Configuration and Build System.\n"
-echo -e "Getting dependencies.\n"
 
 # ------------------------------------------------------------------ #
 # Function to check configure CMake configuration file
@@ -126,13 +128,13 @@ function configure_cmake
 		download "$url" "cmake.zip"
 
 		# Extract
-		echo "Extracting CMake."
+		echo "Extracting..."
 		extract_zip "cmake.zip" "$BUILD_TOOLS_DIR"
 
 		# Find extracted directory
-		extracted_dir=$(find "$BUILD_TOOLS_DIR" -maxdepth 1 -type d -name "cmake-*" | head -n 1)
-		if [[ -d "$extracted_dir" ]]; then
-			MYCMAKE="$extracted_dir/bin/cmake.exe"
+		cmake_dir=$(find "$BUILD_TOOLS_DIR" -maxdepth 1 -type d -name "cmake-*" | head -n 1)
+		if [[ -d "$cmake_dir" && -f "$cmake_dir/bin/cmake.exe" ]]; then
+			MYCMAKE="$cmake_dir/bin/cmake.exe"
 		else
 			echo -e "Error: Unable to find CMake.\n"
 			pause_if_interactive
@@ -140,8 +142,8 @@ function configure_cmake
 		fi
 		
 		# Remove unnecessary files
-		echo "Cleaning up."
 		check_command_success_status rm cmake.zip
+		echo "Deleted archive: cmake_dir.zip"
 
 		echo -e "CMake download completed successfully.\n"
 	fi
@@ -191,13 +193,13 @@ if [[ ! -d "$THIRDPARTY_DIR/imgui" ]]; then
 	download "$url" "imgui.zip"
 
 	# Extract
-    echo "Extracting ImGui."
+    echo "Extracting..."
 	extract_zip "imgui.zip" "$THIRDPARTY_DIR"
 
     # Find extracted directory dynamically
-    extracted_dir=$(find "$THIRDPARTY_DIR" -maxdepth 1 -type d -name "imgui-*" | head -n 1)
-    if [[ -d "$extracted_dir" ]]; then
-        check_command_success_status mv "$extracted_dir" "$THIRDPARTY_DIR/imgui"
+    imgui_dir=$(find "$THIRDPARTY_DIR" -maxdepth 1 -type d -name "imgui-*" | head -n 1)
+    if [[ -d "$imgui_dir" ]]; then
+        check_command_success_status mv "$imgui_dir" "$THIRDPARTY_DIR/imgui"
     else
         echo "Error: Unable to copy ImGUI to thirdparty/imgui folder."
         pause_if_interactive
@@ -205,12 +207,12 @@ if [[ ! -d "$THIRDPARTY_DIR/imgui" ]]; then
     fi
 	
 	# Remove unnecessary files
-    echo "Cleaning up."
     check_command_success_status rm imgui.zip
-
-    echo -e "ImGui download completed successfully.\n"
+	echo -e "Deleted archive: $imgui_dir.zip\n"
 fi
 
+# ------------------------------------------------------------------ #
+echo -e "PandaEditor Project Configuration and Build System.\n"
 
 # ------------------------------------------------------------------ #
 # Function to display folder structure
