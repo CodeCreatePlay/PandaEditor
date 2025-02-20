@@ -31,8 +31,9 @@ private:
     NodePath cam_np;
     NodePath target;
 
-    float speed;
-    float tempSpeed;
+    float move_speed;  // move speed of camera
+    float delta_speed; // move speed scaled by ClockObject::get_global_clock()->get_dt()
+	
     LVecBase3f default_pos;
 };
 

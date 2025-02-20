@@ -42,7 +42,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "p3d_imgui.hpp"
-#include "p3dmath.hpp"
+#include "mathUtils.hpp"
 
 #if defined(__WIN32__) || defined(_WIN32)
 #include <WinUser.h>
