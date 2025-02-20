@@ -101,7 +101,7 @@ THIRDPARTY_DIR="$(pwd)/src/thirdparty"
 DEMO_PROJECTS_DIR="$(pwd)/demos"
 PROJECT_DIR="$(pwd)/game"
 
-MYCMAKE=$(which cmake)
+MYCMAKE=""
 if [[ -z "$MYCMAKE" ]]; then
 	cmake_dir=$(find "$BUILD_TOOLS_DIR" -maxdepth 1 -type d -name "cmake-*" | head -n 1)
     if [[ -d "$cmake_dir" && -f "$cmake_dir/bin/cmake.exe" ]]; then
