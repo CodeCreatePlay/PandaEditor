@@ -37,7 +37,15 @@ void Mouse::update()
     
     dx = x - mData->get_x();
     dy = y - mData->get_y();
-    
+
+	if (dx < 0) horizontal_axis = -1;
+	else if (dx > 0) horizontal_axis = 1;
+	else horizontal_axis = 0;
+	
+	if (dy < 0) vertical_axis = -1;
+	else if (dy > 0) vertical_axis = 1;
+	else vertical_axis = 0;
+
     x = mData->get_x();
     y = mData->get_y();
 }
@@ -76,5 +84,13 @@ float Mouse::get_dy() const { return dy; }
 
 float Mouse::get_x() const { return x; }
 float Mouse::get_y() const { return y; }
+
+float Mouse::get_vertical() const {
+	return vertical_axis;
+}
+
+float Mouse::get_horizontal() const { 
+	return horizontal_axis;
+}
 
 const std::unordered_map<std::string, bool>& Mouse::get_mouse_buttons() const { return mouse_buttons; }

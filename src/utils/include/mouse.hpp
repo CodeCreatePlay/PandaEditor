@@ -20,10 +20,15 @@ public:
     bool has_mouse() const;
 
     // Getters
-    float get_dx() const;
-    float get_dy() const;
-    float get_x() const;
-    float get_y() const;
+	float get_x()    const;
+    float get_y()    const;
+    float get_dx()   const;
+    float get_dy()   const;
+	int get_zoom()   const;
+	
+	float get_vertical()   const;
+	float get_horizontal() const;
+	
     const std::unordered_map<std::string, bool>& get_mouse_buttons() const;
 
 private:
@@ -32,6 +37,11 @@ private:
 	
     float dx;
     float dy;
+	
+	int zoom;
+	
+	float vertical_axis;
+	float horizontal_axis;
 	
 	Engine& engine;
     MouseData* mData;
