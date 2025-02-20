@@ -3,7 +3,6 @@
 
 #include <clockObject.h>
 #include <asyncTask.h>
-#include <genericAsyncTask.h>
 #include <lpoint3.h>
 #include <nodePath.h>
 #include <texturePool.h>
@@ -21,19 +20,21 @@
 #include "cameraCollisionHandler.cpp"
 
 
-static const std::string ASSETS_PATH = "demos/_assets";
+static const std::string ASSETS_PATH = "demos/_assets/_roaming_ralph";
 
 class RoamingRalphDemo {
 public:
     RoamingRalphDemo() 
         : demon(Demon::get_instance()),
+		  camera(demon.game.main_cam),
           camera_controller(ralph, camera),
           camera_collision_handler(ralph, c_trav),
           character_controller(ralph),
           character_collision_handler(ralph, c_trav)
     {
-        camera = demon.game.main_cam;
+		// Get reference to the game camera
 
+		
         // load stuff
         load_world();
         load_actor();
@@ -88,6 +89,7 @@ public:
     }
 
 private:
+	// Character and camera controller related classes
     CharacterController       character_controller;
     CharacterCollisionHandler character_collision_handler;
     CameraController          camera_controller;
@@ -98,24 +100,30 @@ private:
     NodePath ralph;
         
     // Global
-    NodePath           camera;
     CollisionTraverser c_trav;
     
     // Input handling
     std::unordered_map<std::string, bool> key_map;
     std::unordered_map<std::string, std::pair<std::string, bool>> event_map;
     
-    // Other
+    // References
     Demon& demon;
+	NodePath camera;
+	
+	// Cache
+	float dt;
 
-    void update(const PT(AsyncTask)& async_task)
+	
+    void update(const PT(AsyncTask)&)
     {
         if (!demon.engine.mouse_watcher->has_mouse()) return;
 
+        dt = ClockObject::get_global_clock()->get_dt();
+
         c_trav.traverse(demon.engine.render);
-        character_controller.update(async_task->get_dt(), key_map);
+        character_controller.update(dt, key_map);
         character_collision_handler.update();
-        camera_controller.update(async_task->get_dt(), key_map);
+        camera_controller.update(dt, key_map);
     }
 
     void load_world()
