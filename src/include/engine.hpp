@@ -51,7 +51,7 @@ public:
     PT(GraphicsEngine)    engine;
     PT(GraphicsWindow)    win;
     PT(DisplayRegion)     dr;
-    PT(DisplayRegion)     dr2d;
+    PT(DisplayRegion)     dr2D;
 
     PT(MouseWatcher)      mouse_watcher;
 	
@@ -65,14 +65,14 @@ public:
 
     NodePath              render;
     SceneCam              scene_cam;
-    NodePath              render2d;
-    NodePath              aspect2d;
-    NodePath              pixel2d;
-    NodePath              cam2d;
+    NodePath              render2D;
+    NodePath              aspect2D;
+    NodePath              pixel2D;
+    NodePath              cam2D;
 
     Mouse                 mouse;
-    ResourceManager       resourceManager;
-    AxisGrid              axisGrid;
+    ResourceManager       resource_manager;
+    AxisGrid              axis_grid;
 	
 	std::unordered_map<std::string, std::vector<std::function<void()>>> event_map;
     std::vector<std::function<void(std::string event_name)>>            unnamed_events;

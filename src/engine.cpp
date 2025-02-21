@@ -70,54 +70,54 @@ void Engine::create_3d_render() {
 
 void Engine::create_2d_render() {
 
-    dr2d = win->make_display_region(0, 1, 0, 1);
-    dr2d->set_sort(1);
-    dr2d->set_active(true);
+    dr2D = win->make_display_region(0, 1, 0, 1);
+    dr2D->set_sort(1);
+    dr2D->set_active(true);
 
-    render2d = NodePath("Render2d");
-	render2d.set_depth_test(false);
-    render2d.set_depth_write(false);
+    render2D = NodePath("Render2d");
+	render2D.set_depth_test(false);
+    render2D.set_depth_write(false);
 
-    aspect2d = render2d.attach_new_node("Aspect2d");
+    aspect2D = render2D.attach_new_node("Aspect2d");
 
-    // This special root, pixel2d, uses units in pixels that are relative
+    // This special root, pixel2D, uses units in pixels that are relative
     // to the window. The upperleft corner of the window is (0, 0),
     // the lowerleft corner is (xsize, -ysize), in this coordinate system.
     // NodePath());
 
     PGTop* pixel2D_ = new PGTop("Pixel2d");
-    pixel2d = render2d.attach_new_node(pixel2D_);
-    pixel2d.set_pos(-1, 0, 1);
+    pixel2D = render2D.attach_new_node(pixel2D_);
+    pixel2D.set_pos(-1, 0, 1);
 
     auto mouse_watcher_node = DCAST(MouseWatcher, mouse_watcher);
-    DCAST(PGTop, pixel2d.node())->set_mouse_watcher(mouse_watcher_node);
+    DCAST(PGTop, pixel2D.node())->set_mouse_watcher(mouse_watcher_node);
 
     LVecBase2i size = get_size();
     if (size.get_x() > 0 && size.get_y() > 0) {
-		pixel2d.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
+		pixel2D.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
 	}
 
     // 
-    cam2d = NodePath(new Camera("Camera2d"));
-    cam2d.reparent_to(render2d);
+    cam2D = NodePath(new Camera("Camera2d"));
+    cam2D.reparent_to(render2D);
 
     OrthographicLens *lens = new OrthographicLens();
     lens->set_film_size(2, 2);
     lens->set_near_far(-1000, 1000);
-    (DCAST(Camera, cam2d.node()))->set_lens(lens);
+    (DCAST(Camera, cam2D.node()))->set_lens(lens);
 
-    dr2d->set_camera(cam2d);
-    mouse_watcher->set_display_region(dr2d);
+    dr2D->set_camera(cam2D);
+    mouse_watcher->set_display_region(dr2D);
 }
 
 void Engine::create_default_scene() {}
 
 void Engine::create_axis_grid() {
 
-    axisGrid = AxisGrid(100, 10, 2);
-    axisGrid.create();
-    axisGrid.set_light_off();
-    axisGrid.reparent_to(render);
+    axis_grid = AxisGrid(100, 10, 2);
+    axis_grid.create();
+    axis_grid.set_light_off();
+    axis_grid.reparent_to(render);
 }
 
 void Engine::setup_mouse_keyboard(PT(MouseWatcher)& mw) {
@@ -221,13 +221,13 @@ void Engine::on_evt_size() {
     if (aspect_ratio == 0)
         return;
 
-    aspect2d.set_scale(1.0f / aspect_ratio, 1.0f, 1.0f);
+    aspect2D.set_scale(1.0f / aspect_ratio, 1.0f, 1.0f);
     if(scene_cam)
         scene_cam.on_resize_event(aspect_ratio);
 
     LVecBase2i size = get_size();
     if (size.get_x() > 0 && size.get_y() > 0) {
-        pixel2d.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
+        pixel2D.set_scale(2.0f / size.get_x(), 1.0f, 2.0f / size.get_y());
 	}
 	
 	should_repaint = true;
@@ -258,7 +258,7 @@ void Engine::clean_up() {
 	
 	// 3. Remove render and render 2D
 	render.remove_node();
-	render2d.remove_node();
+	render2D.remove_node();
 	
 	// 4. Destroy loader
 	Loader::get_global_ptr()->stop_threads();

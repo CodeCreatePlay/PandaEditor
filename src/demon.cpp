@@ -14,8 +14,8 @@ Demon::Demon() : game(*this), le(*this) {
 	// 1. Initialize
 	// init base editor
 	setup_paths();
-	init_imgui(&p3d_imgui, &engine.pixel2d, engine.mouse_watcher, "Editor");
-		
+	init_imgui(&p3d_imgui, &engine.pixel2D, engine.mouse_watcher, "Editor");
+
 	// init game and level editor
 	game.init();
 	init_imgui(&game.p3d_imgui, &game.pixel2D, game.mouse_watcher, "Game");
@@ -28,14 +28,14 @@ Demon::Demon() : game(*this), le(*this) {
 	BitMask32 game_mask = BitMask32::bit(1);
 	
 	DCAST(Camera, engine.scene_cam.node())->set_camera_mask(ed_mask);
-	DCAST(Camera, engine.cam2d.node())->set_camera_mask(ed_mask);
+	DCAST(Camera, engine.cam2D.node())->set_camera_mask(ed_mask);
 	
 	DCAST(Camera, game.main_cam.node())->set_camera_mask(game_mask);
 	DCAST(Camera, game.cam2D.node())->set_camera_mask(game_mask);
 	
 	// hide editor only geo from game view and vice versa
-	engine.axisGrid.hide(game_mask);
-	engine.render2d.find("**/SceneCameraAxes").hide(game_mask);
+	engine.axis_grid.hide(game_mask);
+	engine.render2D.find("**/SceneCameraAxes").hide(game_mask);
 	p3d_imgui.get_root().hide(game_mask);
 	
 	game.p3d_imgui.get_root().hide(ed_mask);
@@ -106,7 +106,7 @@ void Demon::enable_game_mode() {
 	
 	// hide editor only geometry
 	engine.render.hide();
-	engine.render2d.hide();
+	engine.render2D.hide();
 	
 	// disable editor camera
 	engine.dr->set_camera(NodePath());
@@ -118,7 +118,7 @@ void Demon::enable_game_mode() {
 void Demon::exit_game_mode() {
 	
 	engine.render.show();
-	engine.render2d.show();
+	engine.render2D.show();
 	engine.dr->set_camera(engine.scene_cam);
 	is_game_mode = false;
 }

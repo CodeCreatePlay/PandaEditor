@@ -65,15 +65,12 @@ public:
         // Add an event hook to capture events sent by Panda3D
         demon.engine.accept([this](const std::string& event_name) { this->on_evt(event_name); });
 
-        // Create an update task
-        PT(AsyncTask) update_task = make_task([this](const PT(AsyncTask)& task) -> AsyncTask::DoneStatus {
-            update(task);
-            return AsyncTask::DS_cont;
-        }, "RoamingRalphDemoUpdate");
+		// Create an update task
+		add_task([this](AsyncTask* task) { 
+			this->update(task);
+			return AsyncTask::DS_cont;
+			}, "RoamingRalphDemoUpdate");
 
-        auto task_mgr = AsyncTaskManager::get_global_ptr();
-        task_mgr->add(update_task);
-        
         // Finalize
         // Update at least once before the first 'RoamingRalphDemoUpdate' task update
         const float dt = ClockObject::get_global_clock()->get_dt();
@@ -128,7 +125,7 @@ private:
 
     void load_world()
     {
-        environment = demon.engine.resourceManager.load_model(ASSETS_PATH + "/Level.egg");
+        environment = demon.engine.resource_manager.load_model(ASSETS_PATH + "/Level.egg");
         environment.reparent_to(demon.game.render);
         environment.set_pos(LPoint3(0.0f, 0.0f, 0.0f));
     }
@@ -136,13 +133,13 @@ private:
     void load_actor()
     {
         // load character model
-        ralph = demon.engine.resourceManager.load_model(ASSETS_PATH + "/ralph.egg.pz");
+        ralph = demon.engine.resource_manager.load_model(ASSETS_PATH + "/ralph.egg.pz");
         ralph.reparent_to(demon.game.render);
     }
     
     std::vector<NodePath> load_actor_anims() const
     {
-        NodePath walk_anim = demon.engine.resourceManager.load_model(ASSETS_PATH + "/ralph-run.egg.pz");
+        NodePath walk_anim = demon.engine.resource_manager.load_model(ASSETS_PATH + "/ralph-run.egg.pz");
         return {walk_anim};
     }
 

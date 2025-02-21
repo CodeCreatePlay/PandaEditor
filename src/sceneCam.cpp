@@ -56,7 +56,7 @@ NodePath SceneCam::create_axes(float thickness, float length) {
 void SceneCam::initialize() {
     axes = create_axes();
     axes.set_name("SceneCameraAxes");
-    axes.reparent_to(engine.aspect2d);
+    axes.reparent_to(engine.aspect2D);
     axes.set_scale(0.008f);
 }
 

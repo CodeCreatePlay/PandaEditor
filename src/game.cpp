@@ -32,7 +32,7 @@ void Game::init() {
     render2D.set_depth_write(false);
     render2D.set_material_off(true);
     render2D.set_two_sided(true);
-    render2D.reparent_to(demon.engine.render2d);
+    render2D.reparent_to(demon.engine.render2D);
 	
     // Aspect 2D
     aspect2D = render2D.attach_new_node("GameAspect2d");

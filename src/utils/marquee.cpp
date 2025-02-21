@@ -27,7 +27,7 @@ void Marquee::init(NodePath render) {
     quad.set_color(1, 1, 1, 0.25f);
     quad.set_transparency(TransparencyAttrib::M_alpha);
     quad.hide();
-    quad.reparent_to(engine.render2d);
+    quad.reparent_to(engine.render2D);
 
     // Load and set the shader
     quad.set_shader(Shader::load(Shader::SL_GLSL, "assets/shaders/marquee.vert", "assets/shaders/marquee.frag"));
@@ -105,8 +105,8 @@ std::vector<NodePath> Marquee::get_found_nps() {
         if (child.is_empty()) continue;
 
         // Get the world position of the NodePath relative to render2d
-        LPoint3 np_world_pos = child.get_pos(engine.render2d);
-        LPoint3 p3 = engine.scene_cam.get_relative_point(engine.render2d, np_world_pos);
+        LPoint3 np_world_pos = child.get_pos(engine.render2D);
+        LPoint3 p3 = engine.scene_cam.get_relative_point(engine.render2D, np_world_pos);
 
         // Project the 3D point into 2D using the camera's lens
         LPoint2 p2;
