@@ -35,3 +35,9 @@ T clamp_angle(T angle, J min_val, J max_val) {
     angle = std::fmod(angle, static_cast<T>(360)); // Ensure proper type casting
     return clamp(angle, static_cast<T>(min_val), static_cast<T>(max_val));
 }
+
+// Linear interpolation function
+template <typename T>
+T lerp(T a, T b, float t) {
+    return a + t * (b - a);
+}
