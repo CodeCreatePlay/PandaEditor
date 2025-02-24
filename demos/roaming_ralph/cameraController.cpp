@@ -16,32 +16,18 @@ public:
         floater.set_z(2.0f);
 
         // Set an initial position for the camera
-        camera.set_pos(target_np.get_x(), target_np.get_y() - 60, 5);
+        camera.set_pos(target_np.get_x(), target_np.get_y() - 20, 12.5);
 
         // Make the camera look at the floater above Ralph's head
         camera.look_at(floater);
     }
 
-    void update(float dt, const std::unordered_map<std::string, bool>& key_map) 
-    {
-        // Create a floater object, which floats 2 units above Ralph
-        floater = NodePath("CamLookAtTarget");
-        floater.reparent_to( target_np );
-        floater.set_z(2.0f);
-
-        // Set an initial position for the camera
-        camera.set_pos(target_np.get_x(), target_np.get_y() - 60, 5);
-		
-		// Make the camera look at the floater above Ralph's head
-        camera.look_at(floater);
-	}
-
-    void update(float dt, std::unordered_map<std::string, bool>& key_map) 
+    void update(float dt, std::unordered_map<std::string, bool>& input_map) 
     {
         // Handle camera movement left and right
-        if (key_map["cam-left"])
+        if (input_map["cam-left"])
             camera.set_x(camera, -20 * dt);
-        else if (key_map["cam-right"])
+        else if (input_map["cam-right"])
             camera.set_x(camera, 20 * dt);
 		
         // Compute camera movement constraints
