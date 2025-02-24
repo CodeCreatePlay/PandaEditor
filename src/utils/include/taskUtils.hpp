@@ -28,10 +28,26 @@ AsyncTask* make_task(Callable callable, const std::string& name, int sort = 0, i
     return new InlineTask(std::move(callable), name, sort, priority);
 }
 
-// Utility Function to create and add a task in one step
+// Utility function to create and add a task in one step
 template<class Callable>
 void add_task(Callable callable, const std::string& name, int sort = 0, int priority = 0) {
     AsyncTaskManager::get_global_ptr()->add(make_task(std::move(callable), name, sort, priority));
+}
+
+// Utility function to remove a task by name
+inline void remove_task(const std::string& name) {
+    auto task_mgr = AsyncTaskManager::get_global_ptr();
+    PT(AsyncTask) task = task_mgr->find_task(name);
+    if (task) {
+        task_mgr->remove(task);
+    }
+}
+
+// Utility function to remove a task by its pointer
+inline void remove_task(AsyncTask* task) {
+    if (task) {
+        AsyncTaskManager::get_global_ptr()->remove(task);
+    }
 }
 
 #endif // TASK_UTILS
