@@ -197,7 +197,7 @@ void Demon::imgui_update() {
 	this->p3d_imgui.new_frame_imgui();
 	this->handle_imgui_mouse(this->engine.mouse_watcher, &this->p3d_imgui);
 	
-	engine.trigger("editor_imgui");
+	engine.trigger("main_gui");
 
 	this->p3d_imgui.render_imgui();
 	if(ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
@@ -212,7 +212,7 @@ void Demon::imgui_update() {
 	
 	this->game.p3d_imgui.new_frame_imgui();
 	this->handle_imgui_mouse(this->game.mouse_watcher, &this->game.p3d_imgui);
-	engine.trigger("game_imgui");
+	engine.trigger("game_view_gui");
 
 	this->game.p3d_imgui.render_imgui();
 	if (ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }

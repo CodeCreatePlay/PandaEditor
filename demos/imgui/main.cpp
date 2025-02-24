@@ -47,18 +47,17 @@ void on_imgui_new_frame() {
     }
 }
 
-void on_game_new_frame() {
-		
-	if (ImGui::Button("Game UI Button"))
-		std::cout << "Game UI Button Clicked\n";
-}
-
 int main(int argc, char* argv[])
 {
     Demon &demon = Demon::get_instance();
 	
-	demon.engine.accept("editor_imgui", on_imgui_new_frame );
-	demon.engine.accept("game_imgui",   on_game_new_frame  );
+	demon.engine.accept( "main_gui", on_imgui_new_frame );
+	
+	/*
+	It is also possible to create to separate imgui for game view.
+	
+	demon.engine.accept( "game_view_gui", on_game_view_new_frame  );
+	*/
 	
     demon.start();
 		
