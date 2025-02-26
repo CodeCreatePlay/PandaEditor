@@ -16,11 +16,11 @@
 ### Prerequisites
 - Git
 - Panda3D SDK
+- CMake (Version 3.14 or higher)
+- ImGUI
 - C++ Compiler
    - Windows: Microsoft Visual Studio (with MSVC) -OR- MSVC Build Tools
    - Linux or macOS: GCC or Clang
-- CMake (Version 3.14 or higher)
-- ImGUI
 
 **Note: All dependencies except for Panda3D and C++ compilers (which you can download from the links above) are downloaded at runtime by the build scripts if they are not found in the system path.**
 
@@ -28,14 +28,14 @@
 
 - Make sure you have Panda3D installed and a C++ compiler based on your OS.
 - Download the repository as a ZIP file and extract it to a location of your choice on your system.
-- On Windows, right click `buildMSW.ps1` and select `Run With PowerShell`. On Linux and macOS, simply run the `build.sh` script. Build scripts should download and extract all necessary dependencies.
+- On Windows, run `buildMSW.bat`. On Linux and macOS, run the `build.sh` script. These build scripts will automatically download and extract all necessary dependencies.
 
 <h2 align="center">HelloWorld tutorial</h2>
 
-PandaEditor uses a project-based workflow managed by its build system, simple run the build script based on your OS and it should handle most of the setup and initialization. For now, everything is managed through command-line interface.
+PandaEditor uses a project-based workflow managed by its build system. Simply run the build script for your OS, and it will handle most of the setup and initialization, including generating boilerplate code and setting up a basic scene template. Currently, project management is handled through the command-line interface.
 
 ### Creating a new project
-1. Start the build.sh or buildMSW.ps1 script.
+1. Start the `build.sh` or `buildMSW.bat` script.
 2. When prompted, enter the project name or index number.
 3. If the specified project does not exist, you will have the option to create it or choose another.
 
