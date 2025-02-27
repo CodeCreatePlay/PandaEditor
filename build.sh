@@ -421,20 +421,15 @@ function configure_project
     if [[ -z "$(find "$PROJECT_PATH" -mindepth 1 -maxdepth 1)" ]]; then
         # Create a new main.cpp file with boilerplate code
         cat <<EOF > "$PROJECT_PATH/main.cpp"
-#include "demon.h"
+#include "runtimeScript.hpp"
 
 
-class MyApp {
+class MyApp : public RuntimeScript {
 public:
     MyApp() { 
 	
         /* your code goes here... */
     }
-	
-	void start() {
-	
-		Demon::get_instance().start();
-	}
 };
 
 
