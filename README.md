@@ -1,4 +1,4 @@
-## PandaEditor is an open-source 3D level and scene editor designed for games, simulations and scientific projects. It is powered by Panda3D game engine and offers support for scripting in both Python and C++.
+## PandaEditor is an open-source 3D level and scene editor designed for games, simulations and scientific projects. It is powered by Panda3D game engine and offers support for scripting in C++.
 
 <p align="center">
   <a href="https://www.patreon.com/codecreateplay"><img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" /></a>
