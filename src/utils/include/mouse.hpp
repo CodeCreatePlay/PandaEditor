@@ -5,48 +5,57 @@
 #include <vector>
 #include <string>
 
-
 class Engine;
 
 class Mouse {
 public:
-    Mouse(Engine& engine);
+    Mouse(Engine& _engine);
 	void initialize();
     void update();
-    void set_modifier(int index);
+	void force_relative_mode();
     void clear_modifier(int index);
+	void toggle_force_relative_mode();
     bool has_modifier(int modifier) const;
-    bool is_button_down(const std::string& buttonName) const;
     bool has_mouse() const;
+	bool is_button_down(const std::string& buttonName) const;
 
     // Getters
-	float get_x()    const;
-    float get_y()    const;
-    float get_dx()   const;
-    float get_dy()   const;
-	int get_zoom()   const;
+	float get_x()  const;
+    float get_y()  const;
+    float get_dx() const;
+    float get_dy() const;
+	int get_zoom() const;
 	
 	float get_vertical()   const;
 	float get_horizontal() const;
 	
-    const std::unordered_map<std::string, bool>& get_mouse_buttons() const;
-
+	bool is_mouse_centered() const;
+	
+	const std::unordered_map<std::string, bool>& get_mouse_buttons() const;
+	
+	// Setters
+	void set_modifier(int index);
+	void set_mouse_mode(int mouse_mode_idx);
+	
 private:
-    float x;
-    float y;
+    float _x;
+    float _y;
 	
-    float dx;
-    float dy;
+    float _dx;
+    float _dy;
 	
-	int zoom;
+	int _zoom;
 	
-	float vertical_axis;
-	float horizontal_axis;
+	float _vertical_axis;
+	float _horizontal_axis;
+		
+	int _current_mouse_mode;
+	bool _force_relative_mode;
 	
-	Engine& engine;
-    MouseData* mData;
-    std::unordered_map<std::string, bool> mouse_buttons;
-    std::vector<int> modifiers;
+	Engine& _engine;
+    MouseData* _m_data;
+    std::unordered_map<std::string, bool> _mouse_buttons;
+    std::vector<int> _modifiers;
 };
 
 #endif // MOUSE_H

@@ -3,14 +3,12 @@
 #include <string>
 #include <unordered_map>
 
-#include <collisionTraverser.h>
-#include <collisionEntry.h>
-#include <collisionNode.h>
 #include <collisionRay.h>
+#include <collisionNode.h>
+#include <collisionEntry.h>
 #include <collisionHandlerQueue.h>
+#include <collisionTraverser.h>
 
-
-class Camera;
 class NodePath;
 class Engine;
 
@@ -27,12 +25,13 @@ private:
     std::string _name;
     Engine& _engine;
 
-    PT(CollisionRay) _picker_ray;
-    PT(CollisionHandlerQueue) _coll_handler;
-    PT(CollisionEntry) _coll_entry;
-    CollisionTraverser _traverser;
     NodePath _node;
 
+    PT(CollisionRay) _picker_ray;
+	PT(CollisionEntry) _coll_entry;
+    PT(CollisionHandlerQueue) _coll_handler;
+    CollisionTraverser _traverser;
+	
     float _last_x;
     float _last_y;
 };

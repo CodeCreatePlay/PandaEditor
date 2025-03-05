@@ -4,6 +4,7 @@
 #include "mouse.hpp"
 #include "game.hpp"
 #include "taskUtils.hpp"
+#include "mathUtils.hpp"
 
 class RuntimeScript {
 public:
@@ -23,8 +24,12 @@ public:
         task_name += "Update";
 
         // Add the task to task manager
-        add_task([this](AsyncTask* task) { 
-			if (game.mouse_watcher->has_mouse()) {
+        add_task([this](AsyncTask* task) {
+
+			if (game.mouse_watcher->has_mouse() || 
+				(demon.engine.mouse_watcher->has_mouse() &&
+				demon.engine.mouse.is_mouse_centered()))
+			{
 				dt = ClockObject::get_global_clock()->get_dt();
 				this->on_update(task);
 			}
@@ -78,10 +83,12 @@ protected:
     virtual void on_update(const PT(AsyncTask)&) {}
 	
     virtual void on_event(const std::string& event_name) {
+
+		// update input_map
 		auto& it = buttons_map_.find(event_name);
 		if (it != buttons_map_.end()) {
 			input_map.at(it->second.first) = it->second.second;
-		}
+		}		
 	}
 	
 	float get_dt() {

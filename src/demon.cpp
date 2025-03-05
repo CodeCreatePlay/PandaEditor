@@ -6,24 +6,22 @@
 
 #include "pathUtils.hpp"
 #include "taskUtils.hpp"
+#include "mathUtils.hpp"
 #include "demon.hpp"
 #include "imgui.h"
 
-
-Demon::Demon() : game(*this), le(*this) {
-	// 1. Initialize
-	// init base editor
+Demon::Demon() : game(*this), level_ed(*this) {
 	setup_paths();
+	
+	// Initializations
 	init_imgui(&p3d_imgui, &engine.pixel2D, engine.mouse_watcher, "Editor");
-
-	// init game and level editor
+	
 	game.init();
 	init_imgui(&game.p3d_imgui, &game.pixel2D, game.mouse_watcher, "Game");
 	
-	// init level editor();
-	le.init();
+	level_ed.init();
 	
-	// 2. Setup game and editor viewport camera masks
+	// Setup game and editor viewport camera masks
 	BitMask32 ed_mask   = BitMask32::bit(0);
 	BitMask32 game_mask = BitMask32::bit(1);
 	
@@ -33,7 +31,7 @@ Demon::Demon() : game(*this), le(*this) {
 	DCAST(Camera, game.main_cam.node())->set_camera_mask(game_mask);
 	DCAST(Camera, game.cam2D.node())->set_camera_mask(game_mask);
 	
-	// hide editor only geo from game view and vice versa
+	// Hide editor only geo from game view and vice versa
 	engine.axis_grid.hide(game_mask);
 	engine.render2D.find("**/SceneCameraAxes").hide(game_mask);
 	p3d_imgui.get_root().hide(game_mask);
@@ -41,27 +39,27 @@ Demon::Demon() : game(*this), le(*this) {
 	game.p3d_imgui.get_root().hide(ed_mask);
 	game.p3d_imgui.get_root().show(game_mask);
 		
-	// 3. Create update task
+	// Create update task
 	PT(AsyncTask) update_task = (make_task([this](AsyncTask *task) -> AsyncTask::DoneStatus {
 
 		engine.update();		
 		imgui_update();
-		engine.dispatch_events(mouse_over_ui);
+		engine.dispatch_events(_mouse_over_ui);
 		engine.engine->render_frame();
 
-		mouse_over_ui = false;
+		_mouse_over_ui = false;
 		
 		if(engine.should_repaint) {
 			
 			p3d_imgui.should_repaint = true;
 			game.p3d_imgui.should_repaint = true;
 			
-			if(frames_passed_since_last_repait > 2) {
+			if(_num_frames_since_last_repait > 2) {
 				
 				engine.should_repaint = false;
-				frames_passed_since_last_repait = 0;
+				_num_frames_since_last_repait = 0;
 			}
-			frames_passed_since_last_repait++;
+			_num_frames_since_last_repait++;
 		}
 		
 		return AsyncTask::DS_cont;
@@ -70,10 +68,10 @@ Demon::Demon() : game(*this), le(*this) {
 	update_task->set_sort(MAIN_TASK_SORT);
 	AsyncTaskManager::get_global_ptr()->add(update_task);
 	
-	// 4. event hooks
+	// Add event hooks
 	engine.accept("window-event", [this]() { engine.on_evt_size(); } );
 
-    // 5. Loop through all tasks in the task manager
+    // Loop through all tasks in the task manager
     auto task_mgr = AsyncTaskManager::get_global_ptr();
     AsyncTaskCollection tasks = task_mgr->get_tasks();
     for (int i = 0; i < tasks.get_num_tasks(); ++i) {
@@ -81,13 +79,22 @@ Demon::Demon() : game(*this), le(*this) {
         std::cout << "Task " << i + 1 << ": " << task->get_name() << std::endl;
     }
 	
-	// Reset
-	cleaned_up    = false;
-	is_game_mode  = false;
-	mouse_over_ui = false;
+	// Bind events
+	bind_events();
+	
+	// Set some defaults
+	float game_view_size = default_settings.game_view_size;
+	update_game_view(GameViewStyle::BOTTOM_LEFT, game_view_size, game_view_size);
+	
+	engine.mouse.set_mouse_mode(WindowProperties::M_absolute);
+	
+	_cleaned_up    = false;
+	_is_game_mode  = false;
+	_mouse_over_ui = false;
 }
 
 Demon::~Demon() { 
+	unbind_events();
 	exit(); 
 }
 
@@ -102,74 +109,165 @@ void Demon::setup_paths() {
 	get_model_path().prepend_directory(Filename::from_os_specific(path));
 }
 
+void Demon::bind_events() {
+	engine.accept("shift-1",   [this]() { update_game_view(GameViewStyle::BOTTOM_LEFT);  });
+	engine.accept("shift-2",   [this]() { update_game_view(GameViewStyle::BOTTOM_RIGHT); });
+	engine.accept("shift-3",   [this]() { update_game_view(GameViewStyle::TOP_LEFT);     });
+	engine.accept("shift-4",   [this]() { update_game_view(GameViewStyle::TOP_RIGHT);    });
+	engine.accept("shift-5",   [this]() { update_game_view(GameViewStyle::CENTER);       });
+	engine.accept("shift-+",   [this]() { increase_game_view_size();                     });
+	engine.accept("shift--",   [this]() { decrease_game_view_size();                     });
+	
+	engine.accept("control-1",   [this]() { engine.mouse.set_mouse_mode(WindowProperties::M_absolute); });
+	engine.accept("control-2",   [this]() { engine.mouse.set_mouse_mode(WindowProperties::M_relative); });
+	engine.accept("control-3",   [this]() { engine.mouse.set_mouse_mode(WindowProperties::M_confined); });
+	engine.accept("control-r",   [this]() { engine.mouse.toggle_force_relative_mode(); });
+	
+	engine.accept("shift-g",   [this]() {
+		if (!is_game_mode())
+			enable_game_mode();
+		else
+			exit_game_mode();
+	});
+}
+
+void Demon::unbind_events() {}
+
 void Demon::enable_game_mode() {
+	// Sanity check
+	if (_is_game_mode)
+		return;
 	
-	// hide editor only geometry
-	engine.render.hide();
-	engine.render2D.hide();
-	
-	// disable editor camera
+	// Remove camera from display regions
 	engine.dr->set_camera(NodePath());
+	engine.dr2D->set_camera(NodePath());
+		
+	// Temporarily set display region as inactive
+	engine.dr->set_active(false);
+	engine.dr2D->set_active(false);
 	
-	// set game mode to true
-	is_game_mode = true;
+	// Set game mode to true
+	_is_game_mode = true;
 }
 
 void Demon::exit_game_mode() {
+	// Sanity check
+	if (!_is_game_mode)
+		return;
 	
-	engine.render.show();
-	engine.render2D.show();
+	// Remove camera from display regions
 	engine.dr->set_camera(engine.scene_cam);
-	is_game_mode = false;
+	engine.dr2D->set_camera(engine.cam2D);
+		
+	// Set display regions back to active
+	engine.dr->set_active(true);
+	engine.dr2D->set_active(true);
+		
+	// Set game mode to true
+	_is_game_mode = false;
+}
+
+void Demon::increase_game_view_size() {
+	float increment = (1.0f - default_settings.game_view_size) / 4.0f;	
+	float min_size = default_settings.game_view_size;
+	settings.game_view_size = clamp(settings.game_view_size + increment, min_size, 1.0f);
+	this->update_game_view();
+}
+
+void Demon::decrease_game_view_size() {	
+	float decrement = (1.0f - default_settings.game_view_size) / 4.0f;
+	float min_size = default_settings.game_view_size;
+	settings.game_view_size = clamp(settings.game_view_size - decrement, min_size, 1.0f);
+	this->update_game_view();
+}
+
+void Demon::update_game_view() {
+	GameViewStyle style = settings.game_view_style;
+	float size = settings.game_view_size;	
+	this->update_game_view(style, size, size);
 }
 
 void Demon::update_game_view(GameViewStyle style) {
-    float width  = 0.4f;
-    float height = 0.4f;
+	settings.game_view_style = style;
+	float size = settings.game_view_size;	
+	this->update_game_view(style, size, size);
+}
+
+void Demon::update_game_view(GameViewStyle style, float width, float height) {
+    float left, right, bottom, top;
 
     switch (style) {
         case CENTER:
-            game.dr3D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
-            game.dr2D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            left   = 0.5f - width / 2;
+            right  = 0.5f + width / 2;
+            bottom = 0.5f - height / 2;
+            top    = 0.5f + height / 2;
             break;
 
         case BOTTOM_LEFT:
-            game.dr3D->set_dimensions(0, 0, width, 0, height);
-            game.dr2D->set_dimensions(0, 0, width, 0, height);
+            left   = 0;
+            right  = width;
+            bottom = 0;
+            top    = height;
             break;
 
         case BOTTOM_RIGHT:
-            game.dr3D->set_dimensions(0, 1 - width, 1, 0, height);
-            game.dr2D->set_dimensions(0, 1 - width, 1, 0, height);
+            left   = 1 - width;
+            right  = 1;
+            bottom = 0;
+            top    = height;
             break;
 
         case TOP_LEFT:
-            game.dr3D->set_dimensions(0, 0, width, 1 - height, 1);
-            game.dr2D->set_dimensions(0, 0, width, 1 - height, 1);
+            left   = 0;
+            right  = width;
+            bottom = 1 - height;
+            top    = 1;
             break;
 
         case TOP_RIGHT:
-            game.dr3D->set_dimensions(0, 1 - width, 1, 1 - height, 1);
-            game.dr2D->set_dimensions(0, 1 - width, 1, 1 - height, 1);
+            left   = 1 - width;
+            right  = 1;
+            bottom = 1 - height;
+            top    = 1;
             break;
 
         default:
-            game.dr3D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
-            game.dr2D->set_dimensions(0, 0.5f - width / 2, 0.5f + width / 2, 0.5f - height / 2, 0.5f + height / 2);
+            left   = 0.5f - width / 2;
+            right  = 0.5f + width / 2;
+            bottom = 0.5f - height / 2;
+            top    = 0.5f + height / 2;
             break;
     }
+
+    // Update 3D and 2D Display Regions
+    game.dr3D->set_dimensions(left, right, bottom, top);
+    game.dr2D->set_dimensions(left, right, bottom, top);
+
+    // Convert from [0,1] range to [-1,1] range for MouseWatcherRegion
+    float mw_left   = 2 * left - 1;
+    float mw_right  = 2 * right - 1;
+    float mw_bottom = 2 * bottom - 1;
+    float mw_top    = 2 * top - 1;
+
+    // Update the MouseWatcherRegion
+    game.mouse_region->set_frame(mw_left, mw_right, mw_bottom, mw_top);
+}
+
+bool Demon::is_game_mode() {
+	return _is_game_mode == true;
 }
 
 void Demon::exit() {
 	
-	if(cleaned_up)
+	if(_cleaned_up)
 		return;
 	
 	engine.clean_up();
 	p3d_imgui.clean_up();
 	engine.engine->remove_all_windows();
 
-	cleaned_up = true;
+	_cleaned_up = true;
 }
 
 // ----------------------------------------- imgui integration ----------------------------------------- //
@@ -186,7 +284,7 @@ void Demon::init_imgui(Panda3DImGui *panda3d_imgui, NodePath *parent, MouseWatch
 }
 
 void Demon::imgui_update() {
-	// editor ui update
+	// Editor view ui update
 	ImGui::SetCurrentContext(this->p3d_imgui.context_);
 	
 	if (this->p3d_imgui.should_repaint) {
@@ -200,9 +298,9 @@ void Demon::imgui_update() {
 	engine.trigger("main_gui");
 
 	this->p3d_imgui.render_imgui();
-	if(ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
+	if(ImGui::GetIO().WantCaptureMouse) { _mouse_over_ui = true; }
 	
-	// game view imgui
+	// Game view ui imgui
 	ImGui::SetCurrentContext(this->game.p3d_imgui.context_);
 	
 	if (this->game.p3d_imgui.should_repaint) {
@@ -215,7 +313,7 @@ void Demon::imgui_update() {
 	engine.trigger("game_view_gui");
 
 	this->game.p3d_imgui.render_imgui();
-	if (ImGui::GetIO().WantCaptureMouse) { mouse_over_ui = true; }
+	if (ImGui::GetIO().WantCaptureMouse) { _mouse_over_ui = true; }
 }
 
 void Demon::handle_imgui_mouse(MouseWatcher* mw, Panda3DImGui* panda3d_imgui) {

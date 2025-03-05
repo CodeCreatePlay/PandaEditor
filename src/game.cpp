@@ -1,7 +1,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <iostream>  // Added for std::cout
 
 #include <asyncTask.h>
 #include <displayRegion.h>
@@ -78,11 +77,24 @@ void Game::init() {
     if (size.get_x() > 0 && size.get_y() > 0) {
         pixel2D.set_scale(2.0 / size.get_x(), 1.0, 2.0 / size.get_y());
     }
+		
+	// Define MouseWatcherRegion
+	float view_size = demon.default_settings.game_view_size;
 	
-    std::cout << "-- Game initialized successfully" << std::endl;
+    float mwr_right = 2 * view_size - 1;
+    float mwr_top   = 2 * view_size - 1;
+	
+	mouse_region = new MouseWatcherRegion(
+        "GameMouseWatcherRegion", -1, mwr_right, -1, mwr_top
+    );
+	
+	demon.engine.mouse_watcher->add_region(mouse_region);
 	
     // Subscribe to events
     demon.engine.accept([this](const std::string& event_name) { this->on_evt(event_name); });
+	
+	// Everything done
+	std::cout << "-- Game initialized successfully" << std::endl;
 }
 
 // Handle events
@@ -102,9 +114,12 @@ void Game::on_evt(const std::string& event_name) {
 }
 
 // Create a 3D display region
-void Game::create_dr3D() {
-    dr3D = demon.engine.win->make_display_region(0, 0.4, 0.6, 1);
-    dr3D->set_sort(-1);
+void Game::create_dr3D() {	
+	float size = demon.default_settings.game_view_size;
+	
+	// left-right-bottom-top
+    dr3D = demon.engine.win->make_display_region(0, size, 0, size);
+    dr3D->set_sort(GAME_DR_3D_SORT);
     dr3D->set_clear_color_active(true);
     dr3D->set_clear_depth_active(true);
     dr3D->set_clear_color(LVecBase4(0.65f, 0.65f, 0.65f, 1.0f));
@@ -112,8 +127,10 @@ void Game::create_dr3D() {
 
 // Create a 2D display region
 void Game::create_dr2D() {
-    dr2D = demon.engine.win->make_display_region(0, 0.4, 0.6, 1);
+	float size = demon.default_settings.game_view_size;
+	
+    dr2D = demon.engine.win->make_display_region(0, size, 0, size);
     dr2D->set_clear_depth_active(false);
-    dr2D->set_sort(10);
+    dr2D->set_sort(GAME_DR_2D_SORT);
     dr2D->set_active(true);
 }

@@ -15,18 +15,19 @@ public:
     void init();
     void on_evt(const std::string& event_name); // Pass string by const reference
 	
-    NodePath          render;
-    NodePath          render2D;
-    NodePath          aspect2D;
-    NodePath          pixel2D;
-    NodePath          main_cam;
-    NodePath          cam2D;
+    NodePath               render;
+    NodePath               render2D;
+    NodePath               aspect2D;
+    NodePath               pixel2D;
+    NodePath               main_cam;
+    NodePath               cam2D;
     
-    PT(DisplayRegion) dr3D;
-    PT(DisplayRegion) dr2D;
-    PT(MouseWatcher)  mouse_watcher;
+    PT(DisplayRegion)      dr3D;
+    PT(DisplayRegion)      dr2D;
+    PT(MouseWatcher)       mouse_watcher;
+	PT(MouseWatcherRegion) mouse_region;
     
-    Panda3DImGui      p3d_imgui;
+    Panda3DImGui           p3d_imgui;
 
 private:
     Demon& demon;

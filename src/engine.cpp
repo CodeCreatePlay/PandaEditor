@@ -1,5 +1,5 @@
 #include "engine.hpp"
-
+#include "constants.hpp"
 
 int MOUSE_ALT  = KeyboardButton::alt().get_index();
 int MOUSE_CTRL = KeyboardButton::control().get_index();
@@ -35,7 +35,6 @@ Engine::Engine() : mouse(*this), scene_cam(*this) {
 Engine::~Engine() {}
 
 void Engine::create_win() {
-
     engine = GraphicsEngine::get_global_ptr();
     pipe = GraphicsPipeSelection::get_global_ptr()->make_default_pipe();
 
@@ -46,7 +45,13 @@ void Engine::create_win() {
     fb_props.set_back_buffers(1);
 
     WindowProperties win_props = WindowProperties::get_default();
-    GraphicsOutput *output = engine->make_output(pipe, "PandaEditor", 0, fb_props, win_props, GraphicsPipe::BF_require_window);
+    GraphicsOutput *output = engine->make_output(
+		pipe,
+		"PandaEditor",
+		0,
+		fb_props,
+		win_props,
+		GraphicsPipe::BF_require_window);
     win = DCAST(GraphicsWindow, output);
 }
 
@@ -54,7 +59,7 @@ void Engine::create_3d_render() {
     dr = win->make_display_region();
     dr->set_clear_color_active(true);
     dr->set_clear_color(LColor(0.3, 0.3, 0.3, 1.0));
-	dr->set_sort(-1);
+	dr->set_sort(ENGINE_DR_3D_SORT);
 
     render = NodePath("render");
     render.node()->set_attrib(RescaleNormalAttrib::make_default());
@@ -69,9 +74,8 @@ void Engine::create_3d_render() {
 }
 
 void Engine::create_2d_render() {
-
     dr2D = win->make_display_region(0, 1, 0, 1);
-    dr2D->set_sort(1);
+    dr2D->set_sort(ENGINE_DR_2D_SORT);
     dr2D->set_active(true);
 
     render2D = NodePath("Render2d");
@@ -113,7 +117,6 @@ void Engine::create_2d_render() {
 void Engine::create_default_scene() {}
 
 void Engine::create_axis_grid() {
-
     axis_grid = AxisGrid(100, 10, 2);
     axis_grid.create();
     axis_grid.set_light_off();
@@ -163,8 +166,9 @@ void Engine::setup_mouse_keyboard(PT(MouseWatcher)& mw) {
 }
 
 void Engine::process_events(CPT_Event event) {
-		
     if (!event->get_name().empty()) {
+
+		// std::cout << "EventGenerated: " << event->get_name() << std::endl;
 
         std::vector<void*> param_list;
         for (int i = 0; i < event->get_num_parameters(); ++i) {
@@ -200,7 +204,6 @@ void Engine::process_events(CPT_Event event) {
 }
 
 void Engine::update() {
-
     // traverse the data graph.This reads all the control
     // inputs(from the mouse and keyboard, for instance) and also
     // directly acts upon them(for instance, to move the avatar).
@@ -234,14 +237,12 @@ void Engine::on_evt_size() {
 }
 
 void Engine::reset_clock() {
-
     ClockObject::get_global_clock()->set_real_time(TrueClock::get_global_ptr()->get_short_time());
 	ClockObject::get_global_clock()->tick();
     AsyncTaskManager::get_global_ptr()->set_clock(ClockObject::get_global_clock());
 }
 
 void Engine::clean_up() {
-
 	// 1. Remove all tasks
     // Retrieve all tasks currently managed
     AsyncTaskCollection all_tasks = AsyncTaskManager::get_global_ptr()->get_tasks();
