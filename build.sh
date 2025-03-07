@@ -232,7 +232,8 @@ create_print_project_tree()
 
     echo "src"
     
-    local total_projects_count=0
+	local demos_count=0
+	local user_projects_count=0
     
     # Loop through specific directories (game, demos, builds) inside src
     for top_level_dir in "game" "demos" "builds"; do
@@ -260,19 +261,27 @@ create_print_project_tree()
                     fi
 
                     # Collect user and demo projects
-                    total_projects_count=$((total_projects_count+1))
                     if [[ "$top_level_dir" == "game" ]]; then
-                        USERS_PROJECTS[$total_projects_count]="$dir_name"
+						user_projects_count=$((user_projects_count+1))
+                        USERS_PROJECTS[$user_projects_count]="$dir_name"
                     elif [[ "$top_level_dir" == "demos" ]]; then
-                        DEMO_PROJECTS[$total_projects_count]="$dir_name"
+						demos_count=$((demos_count+1))
+                        DEMO_PROJECTS[$demos_count]="$dir_name"
                     fi
 
                     # Print subdirectory with proper formatting
                     if [[ "$top_level_dir" == "game" ]] || [[ "$top_level_dir" == "demos" ]]; then
+						local idx=0
+						if [[ "$top_level_dir" == "game" ]]; then
+							idx=$user_projects_count
+						elif [[ "$top_level_dir" == "demos" ]]; then
+							idx=$demos_count
+						fi
+						
                         if [[ "$count" -eq "$total_subdirs" ]]; then
-                            echo "│   └── $total_projects_count. $dir_name"  # Last item with └──
+                            echo "│   └── $idx. $dir_name"  # Last item with └──
                         else
-                            echo "│   ├── $total_projects_count. $dir_name"  # Other items with ├──
+                            echo "│   ├── $idx. $dir_name"  # Other items with ├──
                         fi
                     else
                         if [[ "$count" -eq "$total_subdirs" ]]; then
@@ -323,16 +332,30 @@ function get_project_from_user
             # 'assets' is a reserved folder
             echo -e "Invalid project name, try again.\n"
             continue
+		elif [[ "$project_name" =~ ^[GgDd]([0-9]+)$ ]]; then
+			# Extract prefix and numeric index
+			prefix="${project_name:0:1}"  # Get first character (G or D)
+			index="${BASH_REMATCH[1]}"  # Extract number
+
+			if [[ "$prefix" == "G" || "$prefix" == "g" ]]; then
+				if [[ -v USERS_PROJECTS[$index] ]]; then
+					project_name="${USERS_PROJECTS[$index]}"
+				else
+					echo -e "Invalid index: No project found at index $index in 'game'.\n"
+					continue
+				fi
+			elif [[ "$prefix" == "D" || "$prefix" == "d" ]]; then
+				if [[ -v DEMO_PROJECTS[$index] ]]; then
+					project_name="${DEMO_PROJECTS[$index]}"
+				else
+					echo -e "Invalid index: No project found at index $index in 'demos'.\n"
+					continue
+				fi
+			fi
         elif [[ "$project_name" =~ ^[0-9]+$ ]]; then
-            # Handle purely numeric names
-            if [[ -v USERS_PROJECTS[$project_name] ]]; then
-                project_name="${USERS_PROJECTS[$project_name]}"
-            elif [[ -v DEMO_PROJECTS[$project_name] ]]; then
-                project_name="${DEMO_PROJECTS[$project_name]}"
-            else
-                echo -e "Invalid project name: Names cannot be purely numeric. Please try again.\n"
-                continue
-            fi
+			# Handle purely numeric names (disallowing them)
+			echo -e "Invalid project name: Please use 'G' or 'D' prefix for numeric selection.\n"
+			continue
         fi
 
         # Check if the project directory already exists
