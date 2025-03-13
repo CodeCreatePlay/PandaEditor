@@ -37,10 +37,6 @@
 #include "resourceManager.hpp"
 #include "mouse.hpp"
 
-
-extern int MOUSE_ALT;
-extern int MOUSE_CTRL;
-
 class Engine {
 public:
     Engine();

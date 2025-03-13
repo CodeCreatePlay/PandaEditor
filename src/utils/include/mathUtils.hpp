@@ -1,6 +1,8 @@
+#ifndef MATH_UTILS_H
+#define MATH_UTILS_H
 
 template <typename T>
-T convert_to_range(const T value, T old_min, T old_max, T new_min, T new_max) {
+T convert_to_range(T value, T old_min, T old_max, T new_min, T new_max) {
     T old_range = old_max - old_min;
     T new_value;
 
@@ -41,3 +43,32 @@ template <typename T>
 T lerp(T a, T b, float t) {
     return a + t * (b - a);
 }
+
+// Spherical interpolation function
+template <typename A, typename B>
+LQuaternionf slerp(const A& a, const A& b, float t) {
+    // Compute the dot product (cosine of the angle between the quaternions)
+    float dot = a.dot(b);
+
+    // If the dot product is negative, use the opposite quaternion for shorter path
+    if (dot < 0.0f) {
+        dot = -dot;
+    }
+
+    const float THRESHOLD = 0.9995f; // If quaternions are very close, use linear interpolation
+    if (dot > THRESHOLD) {
+        return a * (1.0f - t) + b * t;
+    }
+
+    // Compute the angle between the quaternions
+    float theta = std::acos(dot);
+    float sinTheta = std::sin(theta);
+
+    // Compute interpolation coefficients
+    float w1 = std::sin((1.0f - t) * theta) / sinTheta;
+    float w2 = std::sin(t * theta) / sinTheta;
+
+    return a * w1 + b * w2;
+}
+
+#endif // MATH_UTILS_H

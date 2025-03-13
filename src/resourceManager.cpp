@@ -16,7 +16,6 @@ NodePath ResourceManager::load_model(
     const std::string& path) {
 	
 	LoaderOptions options = LoaderOptions();
-	// options.set_flags(options.get_flags() & ~LoaderOptions::LF_report_errors);
 	options.set_flags(options.get_flags() & ~LoaderOptions::LF_no_cache);
 	options.set_flags(options.get_flags() & ~LoaderOptions::LF_allow_instance);
 	

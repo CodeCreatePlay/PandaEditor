@@ -3,16 +3,17 @@
 #include <mouseButton.h>
 #include <keyboardButton.h>
 #include "taskUtils.hpp"
+#include "constants.hpp"
 #include "engine.hpp"
 #include "mouse.hpp"
 
-Mouse::Mouse(Engine& _engine) : _engine(_engine), _m_data(nullptr) {}
+Mouse::Mouse(Engine& _engine) : _engine(_engine) {}
 
 void Mouse::initialize() {
-	_engine.accept("alt",        [this]() { this->set_modifier(MOUSE_ALT);    });
-	_engine.accept("alt-up",     [this]() { this->clear_modifier(MOUSE_ALT);  });
-	_engine.accept("control",    [this]() { this->set_modifier(MOUSE_CTRL);   });
-	_engine.accept("control-up", [this]() { this->clear_modifier(MOUSE_CTRL); });
+	_engine.accept("alt",        [this]() { this->set_modifier(ALT_KEY_IDX);    });
+	_engine.accept("alt-up",     [this]() { this->clear_modifier(ALT_KEY_IDX);  });
+	_engine.accept("control",    [this]() { this->set_modifier(CTRL_KEY_IDX);   });
+	_engine.accept("control-up", [this]() { this->clear_modifier(CTRL_KEY_IDX); });
 	
 	// Initialize mouse button states
     _mouse_buttons[MouseButton::one().get_name()]   = false;
@@ -30,7 +31,7 @@ void Mouse::update() {
         _mouse_buttons[btn.first] = _engine.mouse_watcher->is_button_down(btn.first);
 
     // Get pointer from screen, calculate delta
-    _m_data = &_engine.win->get_pointer(0);
+    const MouseData _m_data = _engine.win->get_pointer(0);
     
 	if (_force_relative_mode) {
 		_dx = _engine.mouse_watcher->get_mouse_x();
@@ -40,14 +41,14 @@ void Mouse::update() {
 		_vertical_axis   = (_dy > 0) ? 1 : (_dy < 0) ? -1 : 0;
 		
 	} else {
-		_dx = _x - _m_data->get_x();
-		_dy = _y - _m_data->get_y();
+		_dx = _x - _m_data.get_x();
+		_dy = _y - _m_data.get_y();
 		
 		_horizontal_axis = (_dx > 0) ? 1 : (_dx < 0) ? -1 : 0;
 		_vertical_axis   = (_dy > 0) ? 1 : (_dy < 0) ? -1 : 0;
 
-		_x = _m_data->get_x();
-		_y = _m_data->get_y();
+		_x = _m_data.get_x();
+		_y = _m_data.get_y();
 	}
 	
 	if (_force_relative_mode) {

@@ -39,7 +39,7 @@ private:
         collision_ray->set_direction(0, 0, -1);
 
         // Create a collision node to hold the ray
-        collision_ray_node = new CollisionNode("RalphRay");
+        collision_ray_node = new CollisionNode("CameraCollisionRay");
         collision_ray_node->add_solid(collision_ray);
         collision_ray_node->set_from_collide_mask(CollideMask::bit(0));
         collision_ray_node->set_into_collide_mask(CollideMask::all_off());
@@ -57,14 +57,14 @@ private:
     void handle_collisions()
     {
         int numEntries = collision_handler_queue->get_num_entries();
-        if (numEntries == 0) return;  // ✅ No collision, just return
+        if (numEntries == 0) return;
 
         // Panda3D's built-in sorting
         collision_handler_queue->sort_entries();
 
         // Get the lowest collision entry directly
         CollisionEntry* entry = collision_handler_queue->get_entry(0);
-        if (entry->get_into_node()->get_name() == "Collision")
+        if (entry->get_into_node()->get_name() == "Collider")
         {
             target_np.set_z(entry->get_surface_point(NodePath()).get_z());
         }

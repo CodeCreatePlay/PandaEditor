@@ -18,8 +18,7 @@
 #include "cameraController.cpp"
 #include "cameraCollisionHandler.cpp"
 
-
-static const std::string ASSETS_PATH = "demos/_assets/_roaming_ralph";
+static const std::string ASSETS_PATH = "demos/_assets";
 const std::string environment_path   = ASSETS_PATH + "/Level.egg";
 const std::string ralph_path         = ASSETS_PATH + "/ralph.egg.pz";
 const std::string ralph_anims_path   = ASSETS_PATH + "/ralph-run.egg.pz";
@@ -31,14 +30,14 @@ public:
           camera_controller(ralph, camera),
           camera_collision_handler(ralph, c_trav),
           character_controller(ralph),
-          character_collision_handler(ralph, c_trav)
-    {		
+          character_collision_handler(ralph, c_trav) {		
+
         // load stuff
         load_world();
         load_actor();
 		
         std::vector<NodePath> anims = load_actor_anims();
-        LPoint3 start_pos = environment.find("**/start_point").get_pos();
+        LPoint3 start_pos = environment.find("**/Start_Pos").get_pos();
 
         // Take ralph to the starting position
         ralph.set_pos(start_pos);

@@ -6,10 +6,10 @@
 #include <lineSegs.h>
 #include <clockObject.h>
 
-#include "sceneCam.hpp"
-#include "engine.hpp"
+#include "constants.hpp"
 #include "mathUtils.hpp"
-
+#include "engine.hpp"
+#include "sceneCam.hpp"
 
 SceneCam::SceneCam(Engine& engine, float move_speed, const LVecBase3f& default_pos)
     : engine(engine), move_speed(move_speed), default_pos(default_pos), delta_speed(0.0f) {
@@ -93,7 +93,7 @@ void SceneCam::orbit(const LVecBase2f& delta) {
 }
 
 void SceneCam::update() {
-    if (!engine.mouse.has_mouse() || !engine.mouse.has_modifier(MOUSE_ALT))
+    if (!engine.mouse.has_mouse() || !engine.mouse.has_modifier(ALT_KEY_IDX))
         return;
 
     delta_speed = move_speed * ClockObject::get_global_clock()->get_dt();

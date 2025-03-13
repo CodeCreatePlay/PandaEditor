@@ -18,10 +18,10 @@ public:
         this->start_pos = start_pos;
         
         collision_ray = new CollisionRay();
-        collision_ray->set_origin(0, 0, 9);
+        collision_ray->set_origin(0, 0, 10);
         collision_ray->set_direction(0, 0, -1);
 
-        collision_ray_node = new CollisionNode("RalphRay");
+        collision_ray_node = new CollisionNode("CharacterCollisionRay");
         collision_ray_node->add_solid(collision_ray);
         collision_ray_node->set_from_collide_mask(CollideMask::bit(0));
         collision_ray_node->set_into_collide_mask(CollideMask::all_off());
@@ -46,7 +46,7 @@ public:
 
         // Use the first entry
         CollisionEntry* entry = collision_handler_queue->get_entry(0);
-        if (entry->get_into_node()->get_name() == "Collision") {
+        if (entry->get_into_node()->get_name() == "Collider") {
             character.set_z(entry->get_surface_point(NodePath()).get_z());
         }
     }

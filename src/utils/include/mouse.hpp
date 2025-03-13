@@ -53,7 +53,6 @@ private:
 	bool _force_relative_mode;
 	
 	Engine& _engine;
-    MouseData* _m_data;
     std::unordered_map<std::string, bool> _mouse_buttons;
     std::vector<int> _modifiers;
 };

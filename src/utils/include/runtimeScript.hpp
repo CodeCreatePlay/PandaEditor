@@ -1,3 +1,6 @@
+#ifndef RUNTIME_SCRIPT_H
+#define RUNTIME_SCRIPT_H
+
 #include <clockObject.h>
 
 #include "demon.hpp"
@@ -68,7 +71,6 @@ protected:
     }
 	
 	void register_button_map(std::unordered_map<std::string, std::pair<std::string, bool>>& map) {
-		
 		input_map.clear();
 		buttons_map_ = map;
 		
@@ -83,7 +85,6 @@ protected:
     virtual void on_update(const PT(AsyncTask)&) {}
 	
     virtual void on_event(const std::string& event_name) {
-
 		// update input_map
 		auto& it = buttons_map_.find(event_name);
 		if (it != buttons_map_.end()) {
@@ -99,3 +100,5 @@ private:
     std::string task_name;
     std::unordered_map<std::string, std::pair<std::string, bool>> buttons_map_;
 };
+
+#endif // RUNTIME_SCRIPT_H

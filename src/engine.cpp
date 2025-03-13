@@ -1,9 +1,6 @@
 #include "engine.hpp"
 #include "constants.hpp"
 
-int MOUSE_ALT  = KeyboardButton::alt().get_index();
-int MOUSE_CTRL = KeyboardButton::control().get_index();
-
 Engine::Engine() : mouse(*this), scene_cam(*this) {
 
     data_root = NodePath("DataRoot");
