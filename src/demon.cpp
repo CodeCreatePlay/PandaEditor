@@ -138,6 +138,7 @@ void Demon::enable_game_mode() {
 	if (_is_game_mode)
 		return;
 	
+	/*
 	// Remove camera from display regions
 	engine.dr->set_camera(NodePath());
 	engine.dr2D->set_camera(NodePath());
@@ -145,9 +146,11 @@ void Demon::enable_game_mode() {
 	// Temporarily set display region as inactive
 	engine.dr->set_active(false);
 	engine.dr2D->set_active(false);
+	*/
 	
-	// Set game mode to true
+	engine.trigger("game_mode_enabled");
 	_is_game_mode = true;
+	std::cout << "Game mode enabled\n";
 }
 
 void Demon::exit_game_mode() {
@@ -155,6 +158,7 @@ void Demon::exit_game_mode() {
 	if (!_is_game_mode)
 		return;
 	
+	/*
 	// Remove camera from display regions
 	engine.dr->set_camera(engine.scene_cam);
 	engine.dr2D->set_camera(engine.cam2D);
@@ -162,9 +166,11 @@ void Demon::exit_game_mode() {
 	// Set display regions back to active
 	engine.dr->set_active(true);
 	engine.dr2D->set_active(true);
-		
-	// Set game mode to true
+	*/
+	
+	engine.trigger("game_mode_disabled");
 	_is_game_mode = false;
+	std::cout << "Game mode disabled\n";
 }
 
 void Demon::increase_game_view_size() {
